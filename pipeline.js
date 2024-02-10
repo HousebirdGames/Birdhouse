@@ -198,15 +198,15 @@ async function main() {
         await updateVersion(newVersion);
     }
 
-    createConfigForServiceWorker()
+    await createConfigForServiceWorker()
 
     const filesToCache = await getFilesToCache();
-
-    await checkFilesExist(filesToCache);
 
     information(filesToCache);
 
     const cacheSize = await writeFilesToCacheFile(filesToCache);
+
+    await checkFilesExist(filesToCache);
 
     let minifiedSize = '';
     if (!deleteFlag) {
@@ -623,7 +623,7 @@ async function updateVersion(newVersion) {
 }
 
 async function updateVersionOnServiceWorker(newVersion) {
-    const filePath = './birdhouse/service-worker.js';
+    const filePath = './service-worker.js';
     let data = await fsPromises.readFile(filePath, 'utf8');
     data = data.replace(/self.CACHE_VERSION = "(.*?)";/, `self.CACHE_VERSION = "${newVersion}";`);
     await fsPromises.writeFile(filePath, data, 'utf8');
@@ -670,7 +670,7 @@ async function getFilesToCache() {
         'manifest.json',
         'admin-style.css',
         'style.css',
-        'birdhouse/style.css',
+        'birdhouse/default-style.css',
         'birdhouse/filesToCache.js',
         'birdhouse/service-worker-registration.js',
     ];
@@ -694,44 +694,53 @@ async function getFilesToCache() {
 }
 
 async function readFilesFromDirectory(directory, filesToCache) {
-    console.log(chalk.gray(`Reading files from ${directory}...`));
+    infoFlag && console.log(chalk.gray(`Reading files from ${directory}...`));
     const filesInDirectory = await fsPromises.readdir(directory);
     for (const file of filesInDirectory) {
-        console.log(chalk.gray(`    ${file}`));
         const fullPath = path.join(directory, file);
-        const stats = await fsPromises.stat(fullPath);
-        if (stats.isDirectory()) {
-            console.log(chalk.gray(`    Reading files from ${fullPath}...`));
-            await readFilesFromDirectory(fullPath, filesToCache);
-        } else {
-            const fileType = path.extname(file);
-            if (!ignoredFileTypes.includes(fileType)) {
-                infoFlag && console.log(chalk.gray(`    Adding ${fullPath} to files to cache...`));
-                filesToCache.push(fullPath.replace(/\//g, '/'));
-                fileTypeCounts[fileType] = (fileTypeCounts[fileType] || 0) + 1;
-                fileTypeSizes[fileType] = (fileTypeSizes[fileType] || 0) + stats.size;
+        if (fs.existsSync(fullPath)) {
+            const stats = await fsPromises.stat(fullPath);
+            if (stats.isDirectory()) {
+                infoFlag && console.log(chalk.gray(`    Reading files from ${fullPath}...`));
+                await readFilesFromDirectory(fullPath, filesToCache);
+            } else {
+                const fileType = path.extname(file);
+                if (!ignoredFileTypes.includes(fileType)) {
+                    infoFlag && console.log(chalk.gray(`    Adding ${fullPath} to files to cache...`));
+                    filesToCache.push(fullPath.replace(/\//g, '/'));
+                    fileTypeCounts[fileType] = (fileTypeCounts[fileType] || 0) + 1;
+                    fileTypeSizes[fileType] = (fileTypeSizes[fileType] || 0) + stats.size;
+                }
             }
+        } else {
+            console.log(`File does not exist: ${fullPath}`);
         }
     }
 }
 
 async function writeFilesToCacheFile(filesToCache) {
     let totalSize = 0;
+    if (cacheFlag) {
+        console.log(chalk.gray(`Writing ${filesToCache.length} files to ${cacheFile}...`));
+
+        let fileContent = 'self.filesToCache = [\n';
+        fileContent += filesToCache.map(f => `'/${f}',`.replace(/\\/g, '/')).join('\n');
+        fileContent += '\n];';
+        await fsPromises.writeFile(cacheFile, fileContent, 'utf8');
+        const stats = statSync(cacheFile);
+        totalSize += stats.size;
+    }
+
     filesToCache.forEach(file => {
         infoFlag && console.log(chalk.gray(`    File: ${file}`));
-        const stats = statSync(file);
-        totalSize += stats.size;
+
+        if (file != cacheFile) {
+            const stats = statSync(file);
+            totalSize += stats.size;
+        }
     });
 
-    if (!cacheFlag) return totalSize;
     console.log('');
-
-    console.log(chalk.gray(`Writing ${filesToCache.length} files to ${cacheFile}...`));
-
-    let fileContent = 'self.filesToCache = [\n';
-    fileContent += filesToCache.map(f => `'/${f}',`.replace(/\\/g, '/')).join('\n');
-    fileContent += '\n];';
-    await fsPromises.writeFile(cacheFile, fileContent, 'utf8');
 
     console.log(chalk.yellow(`Wrote ${filesToCache.length} files (total size: ${(totalSize / 1048576).toFixed(2)} MB) to ${cacheFile}.`));
 
