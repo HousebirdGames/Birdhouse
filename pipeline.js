@@ -719,6 +719,8 @@ async function readFilesFromDirectory(directory, filesToCache) {
 }
 
 async function writeFilesToCacheFile(filesToCache) {
+    console.log('');
+
     let totalSize = 0;
     if (cacheFlag) {
         console.log(chalk.gray(`Writing ${filesToCache.length} files to ${cacheFile}...`));
@@ -740,7 +742,6 @@ async function writeFilesToCacheFile(filesToCache) {
         }
     });
 
-    console.log('');
 
     console.log(chalk.yellow(`Wrote ${filesToCache.length} files (total size: ${(totalSize / 1048576).toFixed(2)} MB) to ${cacheFile}.`));
 
@@ -750,7 +751,7 @@ async function writeFilesToCacheFile(filesToCache) {
 async function uploadFilesToServer(filesToCache, applicationPath) {
     if (!productionFlag && !stagingFlag) return;
 
-    let filesToUpload = [...filesToCache, 'filesToCache.js'];
+    let filesToUpload = [...filesToCache, './Birdhouse/filesToCache.js'];
 
     if (databaseDir) {
         await readFilesFromDirectory(databaseDir, filesToUpload);
