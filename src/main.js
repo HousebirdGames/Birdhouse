@@ -529,7 +529,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         linkClickListener = async function (event) {
-            event.preventDefault();
             if (event.target.tagName === 'A') {
                 const link = event.target;
                 let href = link.getAttribute('href');
@@ -542,12 +541,9 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 excludedRoutes = excludedRoutes.map(route => { return urlPrefix + route.toLowerCase() });
 
-                console.log('Excluded routes:', excludedRoutes);
                 if (excludedRoutes.includes(getRelativePath(href))) {
-                    console.log('Excluded route:', href);
                     return;
                 }
-                console.log('Not excluded route:', getRelativePath(href));
 
                 if (link.hostname !== window.location.hostname) {
                     return;
@@ -556,8 +552,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 event.preventDefault();
                 if (!href.startsWith('#')) {
                     const normalizedHref = normalizePath(link.href);
-                    //history.pushState(null, '', normalizedHref);
-                    //handleRouteChange();
+                    history.pushState(null, '', normalizedHref);
+                    handleRouteChange();
                 }
             }
         };
