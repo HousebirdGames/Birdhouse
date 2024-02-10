@@ -82,7 +82,7 @@ const sftpConfig = {
     password: sftpConfigFile ? sftpConfigFile.sftpPassword : ''
 };
 
-const minifiedDirectory = 'minified';
+const minifiedDirectory = 'Birdhouse/minified';
 const faviconsBaseFileName = config.faviconsBaseFileName;
 const faviconsInputPath = config.faviconsInputPath;
 const faviconsOutputDir = config.faviconsOutputDir;
