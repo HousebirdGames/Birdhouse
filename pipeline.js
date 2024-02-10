@@ -861,6 +861,14 @@ async function uploadFiles(filesToUpload, sftp, applicationPath) {
 
 async function copySFTPDirectory(sftp, src, dest, tempFolderName = 'temp') {
     const projectTempDir = path.join(__dirname, tempFolderName);
+    console.log(chalk.gray(`    Checking if ${src} exists...`));
+
+    const srcExists = await sftp.exists(src);
+    if (!srcExists) {
+        console.log(chalk.red(`    Source directory ${src} does not exist. Aborting copy operation.`));
+        return;
+    }
+
     console.log(chalk.gray(`    Copying ${src} to ${dest}...`));
 
     if (fs.existsSync(projectTempDir)) {
