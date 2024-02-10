@@ -844,15 +844,19 @@ async function uploadFilesToDirectory(filesToUpload, sftp, applicationPath) {
 async function uploadFiles(filesToUpload, sftp, applicationPath) {
     const backupApplicationPath = `${applicationPath}_BACKUP`;
 
-    if (backupFlag && await sftp.exists(backupApplicationPath)) {
-        console.log(chalk.blue('    Starting Backup...'))
-        await deleteDirectory(sftp, backupApplicationPath);
-    }
-
-
     if (backupFlag) {
-        await sftp.mkdir(backupApplicationPath);
-        await copySFTPDirectory(sftp, applicationPath, backupApplicationPath, 'backup');
+        console.log(chalk.blue('    Starting Backup...'))
+        if (await sftp.exists(applicationPath)) {
+            if (await sftp.exists(backupApplicationPath)) {
+                await deleteDirectory(sftp, backupApplicationPath);
+            }
+
+            await sftp.mkdir(backupApplicationPath);
+            await copySFTPDirectory(sftp, applicationPath, backupApplicationPath, 'backup');
+        }
+        else {
+            console.log(chalk.red('    No directory to backup.'));
+        }
     }
 
     await createDirectoriesOnServer(filesToUpload, sftp, applicationPath);
