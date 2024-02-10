@@ -529,6 +529,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         linkClickListener = async function (event) {
+            event.preventDefault();
             if (event.target.tagName === 'A') {
                 const link = event.target;
                 let href = link.getAttribute('href');
@@ -537,24 +538,26 @@ document.addEventListener("DOMContentLoaded", async () => {
                 href = url.origin + url.pathname;
                 Analytics("Click: " + href);
 
-                const excludedRoutes = await triggerHook('get-spa-excluded-links') || [];
+                let excludedRoutes = await triggerHook('get-spa-excluded-links') || [];
 
-                if (excludedRoutes.includes(href.replace(urlPrefix + '/', ''))) {
-                    window.location.replace(href);
+                excludedRoutes = excludedRoutes.map(route => { return urlPrefix + route.toLowerCase() });
+
+                console.log('Excluded routes:', excludedRoutes);
+                if (excludedRoutes.includes(getRelativePath(href))) {
+                    console.log('Excluded route:', href);
                     return;
                 }
+                console.log('Not excluded route:', getRelativePath(href));
 
                 if (link.hostname !== window.location.hostname) {
                     return;
                 }
 
                 event.preventDefault();
-                if (href.startsWith('#')) {
-                    event.preventDefault();
-                } else {
+                if (!href.startsWith('#')) {
                     const normalizedHref = normalizePath(link.href);
-                    history.pushState(null, '', normalizedHref);
-                    handleRouteChange();
+                    //history.pushState(null, '', normalizedHref);
+                    //handleRouteChange();
                 }
             }
         };
