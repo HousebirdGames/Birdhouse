@@ -1,0 +1,119 @@
+.image-spliter,
+.mover {
+    overflow: hidden;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+    -khtml-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+.image-spliter {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--borderRadius);
+}
+
+.img-left {
+    position: absolute;
+    top: 0;
+    left: 0;
+}
+
+.mover {
+    position: absolute;
+    width: 20rem;
+    height: 100%;
+    top: 0;
+    left: 0;
+    z-index: 1;
+}
+
+.image-spliter:not(.active) {
+    cursor: grab;
+    cursor: -webkit-grab;
+}
+
+.mover::before,
+.mover::after {
+    position: absolute;
+    left: 50%;
+    content: "";
+    background: var(--fontColor);
+}
+
+.mover::after {
+    box-shadow: 0 0 1rem var(--muchDarker);
+    animation: wiggleMover 4.2s infinite ease-in-out;
+}
+
+.mover.stop-animation::after {
+    animation: none;
+}
+
+@keyframes wiggleMover {
+
+    0%,
+    80%,
+    100% {
+        left: 50%;
+    }
+
+    90% {
+        left: 52%;
+    }
+
+    95% {
+        left: 49%;
+    }
+
+    97.5% {
+        left: 51%;
+    }
+
+    99% {
+        left: 49.5%;
+    }
+}
+
+.mover:before {
+    top: 0;
+    transform: translateX(-50%);
+    width: 1px;
+    height: 100%;
+}
+
+.mover:after {
+    top: 50%;
+    transform: translate(-50%, -50%);
+    width: 2rem;
+    height: 20%;
+    border-radius: var(--borderRadiusButtons);
+    background: var(--muchlighter);
+    transition: var(--transitionFast);
+    transition: top 0.24s ease-out;
+}
+
+.mover.top:after {
+    top: 20%;
+}
+
+.mover.bottom:after {
+    top: 80%;
+}
+
+.image-spliter:hover .mover:after {
+    background: var(--background-secondary);
+    opacity: 0.8;
+}
+
+.image-spliter.active {
+    cursor: grabbing !important;
+    cursor: -webkit-grabbing !important;
+}
+
+.image-spliter.active .mover::after {
+    background: var(--background-secondary-highlight);
+    opacity: 0.8;
+}

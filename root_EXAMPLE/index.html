@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+	<meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, viewport-fit=cover">
+	<meta name="description" content="I built this Web App with Birdhouse!">
+	<title class="title">My Birdhouse Web App</title>
+	<link rel="preload" href="birdhouse/fonts/MaterialIcons-Regular.woff2" as="font" type="font/woff2" crossorigin>
+	<link rel="icon" type="image/png" sizes="16x16" href="img/favicons/Favicon-16x16.png">
+	<link rel="icon" type="image/png" sizes="32x32" href="img/favicons/Favicon-32x32.png">
+	<link rel="icon" type="image/png" sizes="64x64" href="img/favicons/Favicon-64x64.png">
+	<link rel="icon" type="image/png" sizes="128x128" href="img/favicons/Favicon-128x128.png">
+	<link rel="apple-touch-icon" sizes="152x152" href="img/favicons/Favicon-152x152.png">
+	<link rel="apple-touch-icon" sizes="167x167" href="img/favicons/Favicon-167x167.png">
+	<link rel="apple-touch-icon" sizes="180x180" href="img/favicons/Favicon-180x180.png">
+	<link rel="icon" type="image/png" sizes="192x192" href="img/favicons/Favicon-192x192.png">
+	<link rel="icon" type="image/png" sizes="196x196" href="img/favicons/Favicon-196x196.png">
+	<meta name="theme-color" content="#ffffff">
+	<meta http-equiv="Content-Security-Policy"
+		content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none';">
+	<link rel="stylesheet" href="birdhouse/style.css">
+	<link rel="stylesheet" href="style.css">
+	<link rel="manifest" href="manifest.json">
+	<script type="module" src="birdhouse/service-worker-registration.js"></script>
+</head>
+
+<body class="displayNone">
+	<div id="adminBar"></div>
+	<div id="infoBar"></div>
+	<div id="header" class="noLogo fade-in-fast">
+		<header>
+			<p>HEADER</p>
+		</header>
+	</div>
+
+	<noscript>
+		<div class="javascriptWarning">
+			<strong>Warning:</strong>
+			JavaScript is not enabled in your browser. This website requires JavaScript to
+			function properly. Please enable JavaScript and refresh the page.
+		</div>
+		<br>
+	</noscript>
+
+	<script type="module" src="birdhouse/src/main.js" defer></script>
+
+	<div id="content">
+		<h1>CONTENT</h1>
+		<p>This is some content.</p>
+	</div>
+
+	<div id="newUpdatePopup" class="popup fade-in-fast dispayNone keepOpen">
+		<div id="newUpdatePopupContent" class="popup-content">
+			<h2 id="newUpdateAvailable">New Update available</h2>
+			<p class="versionInfo" id="versionInfo"></p>
+			<p class="">Click "Update Now" to immediately install the latest version. Alternatively, "Update Later" will close this popup and schedule the automatic update
+				at a later time.</p>
+			<div class="linkRow">
+				<button id="update-version-btn" class="update-version-btn highlight">Update now</button>
+				<button id="update-version-close-btn" class="closePopup">Update later</button>
+			</div>
+		</div>
+	</div>
+
+	<div id="baseContent"></div>
+</body>
+
+<footer id="footer">
+	<p>©
+		<span id="currentYear"></span>my-web-app
+	</p>
+	<span>
+		<button class="updateNotesButton">Update Notes</button>
+		<button class="openAcknowledgementButton">Storage Settings</button>
+	</span>
+</footer>
+
+</html>

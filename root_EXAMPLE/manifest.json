@@ -1,0 +1,101 @@
+{
+    "name": "Your App Name",
+    "short_name": "Your App Name",
+    "description": "Your App Description",
+    "lang": "en",
+    "dir": "ltr",
+    "start_url": "/index.html",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#ffffff",
+    "icons": [
+        {
+            "src": "img/logos/YOUR-LOGO-48x48.jpg",
+            "sizes": "48x48",
+            "type": "image/jpg",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-48x48.jpg",
+            "sizes": "48x48",
+            "type": "image/jpg",
+            "purpose": "maskable"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-48x48.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-48x48.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-72x72.png",
+            "sizes": "72x72",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-464x464.png",
+            "sizes": "464x464",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-464x464.png",
+            "sizes": "464x464",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-464x464.jpg",
+            "sizes": "464x464",
+            "type": "image/jpg",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO-464x464.jpg",
+            "sizes": "464x464",
+            "type": "image/jpg",
+            "purpose": "maskable"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO.jpg",
+            "sizes": "3000x3000",
+            "type": "image/jpg",
+            "purpose": "any"
+        },
+        {
+            "src": "img/logos/YOUR-LOGO.png",
+            "sizes": "3000x3000",
+            "type": "image/png",
+            "purpose": "maskable"
+        }
+    ],
+    "screenshots": [
+        {
+            "src": "img/screenshots/YOUR-APP-SCREENSHOT.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "wide",
+            "label": "Describe what's happening in the screenshot."
+        },
+        {
+            "src": "img/screenshots/YOUR-APP-SCREENSHOT.png",
+            "sizes": "1280x720",
+            "type": "image/png",
+            "form_factor": "narrow",
+            "label": "Describe what's happening in the screenshot."
+        }
+    ]
+}

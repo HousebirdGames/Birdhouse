@@ -1,0 +1,15 @@
+node_modules
+minified
+temp
+backup
+pipeline-log.txt
+config-sw.js
+filesToCache.js
+/index.html
+/sitemap.xml
+/robots.txt
+/.htaccess
+/sftp-config.js
+.gitkeep
+config.js
+pipeline-config.js

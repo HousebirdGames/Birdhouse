@@ -1,0 +1,230 @@
+/* To begin, you can change, add or remove any of the variables */
+
+:root {
+    --fontColor: white;
+    --fontHighlight: #bce1ff;
+    --accent: #39425c;
+    --lighter: rgba(255, 255, 255, 0.2);
+    --muchlighter: rgba(255, 255, 255, 0.6);
+    --darker: rgba(0, 0, 0, 0.4);
+    --muchDarker: rgba(0, 0, 0, 0.6);
+    --highlight: #58a4e3;
+    --highlightHover: #83c7ff;
+    --highlightActive: #3f9fee;
+    --background: #242a3a;
+    --warning: rgb(218, 113, 113);
+    --none: rgb(255, 255, 255, 0);
+
+    --padding: 1rem;
+    --border: 0.1rem solid white;
+    --borderRadius: 0.4rem;
+    --borderRadiusButtons: 0.4rem;
+    --fontFamily: system-ui;
+    --boxShadow: 0rem 0 2rem var(--muchDarker);
+    --fontSizeSmall: 0.8rem;
+    --fontSize: 1rem;
+    --fontSizeMedium: 1.2rem;
+    --fontSizeLarge: 1.4rem;
+    --fontSizeExtraLarge: 2rem;
+    --transitionFast: 0.1s ease-in-out;
+    --transitionNormal: 0.4s ease-in-out;
+    --transitionSlow: 1.4s ease-in-out;
+}
+
+::selection {
+    color: var(--background);
+    background-color: var(--fontHighlight);
+}
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: var(--background);
+    font-size: var(--fontSize);
+    color: var(--fontColor);
+    min-height: 100lvh;
+}
+
+header {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+header,
+footer {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    box-sizing: border-box;
+    width: 100%;
+    gap: var(--padding);
+    padding: var(--padding);
+    background: var(--accent);
+    box-shadow: var(--boxShadow);
+}
+
+#content {
+    display: flex;
+    flex-direction: column;
+    height: 100lvh;
+    gap: var(--padding);
+    padding: var(--padding);
+    width: 24rem;
+}
+
+#infoBar {
+    background: var(--highlightActive);
+    color: var(--background);
+}
+
+.spaceRight {
+    margin-right: 0.4rem;
+}
+
+.spaceLeft {
+    margin-left: 0.4rem;
+}
+
+#storageAcknoledgementButtonRow,
+#updateNotesButtonsContainer {
+    display: flex;
+    flex-direction: row;
+    gap: var(--padding);
+}
+
+li {
+    list-style: none;
+}
+
+h1,
+h2 {
+    font-size: var(--fontSizeExtraLarge);
+}
+
+h3,
+h4 {
+    font-size: var(--fontSizeLarge);
+}
+
+h5,
+h6 {
+    font-size: var(--fontSizeMedium);
+}
+
+a {
+    color: var(--highlight);
+    text-decoration: none;
+    transition: var(--transitionFast);
+}
+
+a:hover {
+    color: var(--highlightHover);
+}
+
+a:active {
+    color: var(--highlightActive);
+}
+
+input,
+textarea {
+    color: var(--background);
+    box-sizing: border-box;
+    background: var(--muchlighter);
+    border-radius: var(--borderRadiusButtons);
+    border: none;
+    resize: none;
+    overflow-y: hidden;
+    transition: var(--transitionFast);
+    width: 100%;
+    padding: var(--padding);
+}
+
+input::placeholder,
+textarea::placeholder {
+    color: var(--muchDarker);
+}
+
+button {
+    background: var(--highlight);
+    color: var(--fontColor);
+    padding: 0.4rem;
+    border-radius: var(--borderRadiusButtons);
+    border: none;
+    width: fit-content;
+    cursor: pointer;
+    transition: var(--transitionFast);
+}
+
+button:hover {
+    background: var(--highlightHover);
+}
+
+button:active {
+    background: var(--highlightActive);
+}
+
+.error-message {
+    color: var(--warning);
+    font-size: var(--fontSizeSmall);
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height var(--transitionFast);
+}
+
+.popup {
+    background: var(--darker);
+    transition: var(--transitionFast);
+}
+
+.popup-content {
+    display: flex;
+    flex-direction: column;
+    gap: var(--padding);
+    align-items: center;
+    background: var(--accent);
+    width: 24rem;
+    max-width: 90%;
+    max-height: 90%;
+    padding: var(--padding);
+    text-align: center;
+    border-radius: var(--borderRadius);
+    box-shadow: var(--boxShadow);
+}
+
+.fade-in-fast {
+    animation-name: fade-in-fast;
+    animation-duration: 0.2s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1;
+}
+
+@keyframes fade-in-fast {
+    0% {
+        opacity: 0;
+    }
+
+    100% {
+        opacity: 1;
+    }
+}
+
+.fade-out-fast {
+    animation-name: fade-out-fast;
+    animation-duration: 0.2s;
+    animation-fill-mode: forwards;
+    animation-timing-function: ease-in-out;
+    animation-iteration-count: 1;
+}
+
+@keyframes fade-out-fast {
+    0% {
+        opacity: 1;
+    }
+
+    100% {
+        opacity: 0;
+    }
+}

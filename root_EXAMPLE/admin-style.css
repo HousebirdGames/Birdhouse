@@ -1,0 +1,26 @@
+/* If you have implemented admin logins, this style will be loaded for the admin users */
+
+#adminBar {
+    display: flex;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.2rem;
+    box-sizing: border-box;
+    background: var(--adminColor);
+    padding: 0.2rem;
+    width: 100%;
+    z-index: 100;
+}
+
+#adminBar a,
+#adminBar button {
+    font-size: var(--fontSizeSmall);
+}
+
+.adminButton {
+    background: var(--darker);
+    font-size: var(--fontSizeSmall);
+    padding: 0.2rem 0.4rem;
+    margin: 0.2rem
+}

@@ -1,0 +1,7 @@
+
+# robots.txt for https://YOUR_DOMAIN.EXAMPLE
+User-agent: *
+
+Disallow: /uploads/
+
+Sitemap: https://YOUR_DOMAIN.EXAMPLE/sitemap.xml

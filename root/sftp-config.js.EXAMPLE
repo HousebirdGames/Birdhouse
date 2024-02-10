@@ -1,0 +1,6 @@
+module.exports = {
+    sftpHost: 'ssh.your_sftp_host.com',
+    sftpPort: '22',
+    sftpUsername: 'sftp_username',
+    sftpPassword: 'sftp_password',
+};
