@@ -1,4 +1,4 @@
-/*the-friend-ship.com was created and published by Felix T. Vogel in 2023*/
+/*Birdhouse was created and published by Felix T. Vogel in 2024*/
 
 import { hooks, hook, triggerHook } from './modules/hooks.js';
 import PopupManager from './modules/popupManager.js';

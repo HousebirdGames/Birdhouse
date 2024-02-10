@@ -1,5 +1,3 @@
-/*the-friend-ship.com was created and published by Felix T. Vogel in 2023*/
-
 export const updateNotes = [
     {
         "version": "1.0.0",
