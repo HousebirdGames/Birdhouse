@@ -454,7 +454,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         initializeCookiesAndStoragePopupButtons();
 
         if (config.enableImageComparisonSliders) {
-            loadCSS(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
             try {
                 const module = await import(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
                 module.initImageComparisons();
