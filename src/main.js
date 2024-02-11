@@ -385,7 +385,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         `;
 
         path = normalizePath(window.location.pathname);
-        let cacheSetting = 'default'; //'default'
 
         let component = null;
         let dynamicRoute = false;
@@ -407,7 +406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             let route = findRoute(path);
 
             if (!route) {
-                dynamicRoute = triggerHook('add-dynamic-routes', path);
+                dynamicRoute = await triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
 
                 if (!route) {
                     route = findRoute(path);
