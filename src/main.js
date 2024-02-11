@@ -453,15 +453,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         initializeCookiesAndStoragePopupButtons();
 
-        if (config.enableImageComparisonSliders) {
-            try {
-                const module = await import(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
-                module.initImageComparisons();
-            } catch (err) {
-                console.error('Failed to load module', err);
-            }
-        }
-
         addLinkListeners();
 
         const initialLoadingSymbol = document.getElementById('initialLoadingSymbol');
@@ -519,6 +510,15 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (message != "") {
             removeQueryParameter('message');
             alertPopup(messageTitle, `<p>${message}</p>`);
+        }
+
+        if (config.enableImageComparisonSliders) {
+            try {
+                const module = await import(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
+                module.initImageComparisons();
+            } catch (err) {
+                console.error('Failed to load module', err);
+            }
         }
     }
 
