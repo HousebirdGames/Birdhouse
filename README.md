@@ -9,7 +9,7 @@ The Framework is a lightweight way to have a web app that mainly utilizes the re
 
 Follow these steps to get the project up and running on your local machine:
 
-1. Clone the repository from GitHub. If you have [Git](https://git-scm.com/downloads) installed on your machine, you can do this by executing the following command:
+1. Clone the repository from GitHub. **The Birdhouse repo has to be in the `Birdhouse`-subdirectory of your project.** If you have [Git](https://git-scm.com/downloads) installed on your machine, you can do this by navigating to your project directory and executing the following command:
 
     ```bash
     git clone https://github.com/HousebirdGames/Birdhouse.git
