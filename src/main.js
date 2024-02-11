@@ -24,6 +24,10 @@ function sanitizeIdentifier(title) {
     return title.replace(/[\s,;=]/g, '_');
 }
 
+if (config.enableImageComparisonSliders) {
+    loadCSS(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
+}
+
 let retryDelay = 1000;
 let hadError = false;
 
@@ -450,9 +454,9 @@ document.addEventListener("DOMContentLoaded", async () => {
         initializeCookiesAndStoragePopupButtons();
 
         if (config.enableImageComparisonSliders) {
+            loadCSS(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
             try {
                 const module = await import(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
-                loadCSS(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
                 module.initImageComparisons();
             } catch (err) {
                 console.error('Failed to load module', err);
