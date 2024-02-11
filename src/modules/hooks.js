@@ -1,18 +1,23 @@
-export let hooks = {};
+window.hooks = {};
+window.hookCache = {};
 
-export function hook(name, callback) {
-    if (!hooks[name]) {
-        hooks[name] = [];
+window.hook = function (name, callback) {
+    if (!window.hooks[name]) {
+        window.hooks[name] = [];
     }
-    hooks[name].push(callback);
-}
+    window.hooks[name].push(callback);
+    window.hookCache[name] = callback;
+};
 
-export async function triggerHook(name, ...args) {
-    if (!hooks[name]) {
+window.triggerHook = async function (name, ...args) {
+    if (!window.hooks[name]) {
         return args;
     }
-    for (let hook of hooks[name]) {
+
+    let hook = window.hookCache[name];
+    if (hook) {
         args = await hook(...args);
     }
+
     return args;
-}
+};

@@ -1,6 +1,5 @@
 // Required imports
 import * as main from "./birdhouse/src/main.js";
-import { hooks, hook, triggerHook } from './birdhouse/src/modules/hooks.js';
 import { displayError, clearError } from "./birdhouse/src/modules/input-validation.js";
 
 // Your custom imports
@@ -9,7 +8,7 @@ import Example from './src/components/example.js';
 // More hooks might become available or necessary in the future.
 // Remember to keep your everywhere.js file up to date with the latest version of the example everywhere.js file.
 
-hook('before-adding-base-content', async function (menuHTML) {
+window.hook('before-adding-base-content', async function (menuHTML) {
     const headerElement = document.getElementById("header");
     if (!headerElement) {
         return;
@@ -18,7 +17,7 @@ hook('before-adding-base-content', async function (menuHTML) {
     headerElement.innerHTML = menuHTML;
 });
 
-hook('get-popup-menu-html', async function (menuHTML) {
+window.hook('get-popup-menu-html', async function (menuHTML) {
     return `
     <div id="menu" class="popup">
 		<div class="menuList fade-left-menu">
@@ -31,7 +30,7 @@ hook('get-popup-menu-html', async function (menuHTML) {
     `;
 });
 
-hook('page-loaded', async function () {
+window.hook('page-loaded', async function () {
     await onPageLoaded();
 });
 
@@ -52,11 +51,11 @@ async function onPageLoaded() {
     }
 }
 
-hook('user-logged-in', async function () {
+window.hook('user-logged-in', async function () {
     // Triggered when a user is logged in
 });
 
-hook('add-markdown-patterns', async function (html) {
+window.hook('add-markdown-patterns', async function (html) {
     // Let's add some custom markdown patterns
     const examplePattern = /\[example_pattern\]/g;
 
@@ -66,7 +65,7 @@ hook('add-markdown-patterns', async function (html) {
     return html;
 });
 
-hook('create-routes', async function () {
+window.hook('create-routes', async function () {
     // Let's create some routes.
     // Each route type will be added to the menu, based on the user's role.
     // So the menuHTML will be different for the public and user. The admin is also a user.
@@ -90,7 +89,7 @@ hook('create-routes', async function () {
     main.createAdminRoute('/example-for-users', 'Example Page for Admins', 'admin_panel_settings', 'components/example.js', true);
 });
 
-hook('get-cookies-list', async function () {
+window.hook('get-cookies-list', async function () {
     // Let's add some default cookies to the list.
 
     let cookies = [
@@ -102,7 +101,7 @@ hook('get-cookies-list', async function () {
     return cookies;
 });
 
-hook('get-allowed-paths-during-maintenance', async function () {
+window.hook('get-allowed-paths-during-maintenance', async function () {
     // Let's add some paths that are allowed during maintenance.
 
     let allowedPathsDuringMaintenance = [
@@ -117,7 +116,7 @@ hook('get-allowed-paths-during-maintenance', async function () {
     return allowedPathsDuringMaintenance;
 });
 
-hook('get-spa-excluded-links', async function () {
+window.hook('get-spa-excluded-links', async function () {
     // Let's add some routes that are excluded from the single page application route handling.
 
     let excludedRoutes = [
@@ -127,7 +126,7 @@ hook('get-spa-excluded-links', async function () {
     return excludedRoutes;
 });
 
-hook('get-storage-acknoledgement-popup-content', async function () {
+window.hook('get-storage-acknoledgement-popup-content', async function () {
     // Let's add some content to the storage acknoledgement popup.
 
     const content = `
@@ -144,7 +143,7 @@ hook('get-storage-acknoledgement-popup-content', async function () {
     return content;
 });
 
-hook('generate-menu-html', async function (menuItems) {
+window.hook('generate-menu-html', async function (menuItems) {
     // Here you can modify how the menuHTML is generated from the menu items that are created with createPublicRoute, createUserRoute and createAdminRoute.
 
     return menuItems
@@ -160,7 +159,7 @@ hook('generate-menu-html', async function (menuItems) {
         .join('');
 });
 
-hook('fetch-user-data', async function () {
+window.hook('fetch-user-data', async function () {
     // Let's return some default user data. Normally you would fetch this from a database.
 
     //You can try the different user examples by uncommenting them one by one.
@@ -199,20 +198,20 @@ hook('fetch-user-data', async function () {
     });
 });
 
-hook('check-remember-me', async function () {
+window.hook('check-remember-me', async function () {
     // If your backend confirms that the user is remembered (i.e. Token accepted), return true.
     // Returning true here, will then reload the page.
 
     return false;
 });
 
-hook('get-maintenance-mode', async function () {
+window.hook('get-maintenance-mode', async function () {
     // Here you would fetch the maintenance mode status from your backend.
 
     return false;
 });
 
-hook('add-dynamic-routes', async function (path) {
+window.hook('add-dynamic-routes', async function (path) {
     // Here you can add some dynamic routes based on the path.
     // For example, you could add a route for each user, based on the user's ID. Or maybe you want to create blog posts that are fetched from a database.
     // These routes are only created when the user visits the path. So you can add a lot of dynamic routes without slowing down the initial page load. This also means, that they can not be added to the menu automatically.
@@ -223,7 +222,7 @@ hook('add-dynamic-routes', async function (path) {
     return false;
 });
 
-hook('database-get-setting', async function (name, cacheSetting) {
+window.hook('database-get-setting', async function (name, cacheSetting) {
     // Here you would fetch a setting from your backend.
     // In this example, we just return a default setting as a json response.
 
@@ -232,7 +231,7 @@ hook('database-get-setting', async function (name, cacheSetting) {
     });
 });
 
-hook('database-set-setting', async function (name, value) {
+window.hook('database-set-setting', async function (name, value) {
     // Here you would set a setting in your backend.
     // In this example, we just return a success message as a json response.
 
@@ -241,14 +240,14 @@ hook('database-set-setting', async function (name, value) {
     });
 });
 
-hook('send-analytics', async function (value) {
+window.hook('send-analytics', async function (value) {
     // Here you would send analytics data to your backend.
     // In this example, we just log the value to the console.
 
     console.log('Analytics:', value);
 });
 
-hook('validate-field', async function (input, value, errorElement, serverSide) {
+window.hook('validate-field', async function (input, value, errorElement, serverSide) {
     // This hook is triggered when a field is validated. You can use it to add custom validation rules.
     // If there are no errors, the error of the field will be cleared automatically if nothing or true is returned.
 

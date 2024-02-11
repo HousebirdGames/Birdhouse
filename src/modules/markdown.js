@@ -1,5 +1,3 @@
-import { hooks, hook, triggerHook } from './hooks.js';
-
 export async function markdown(input) {
     let html = input;
 
@@ -38,7 +36,7 @@ export async function markdown(input) {
         html = html.replace(match[0], `<div class="${match[1]}">${divResults[index]}</div>`);
     });
 
-    html = await triggerHook('add-markdown-patterns', html);
+    html = await window.triggerHook('add-markdown-patterns', html);
     html = html.replace(boldPattern, "<strong>$1</strong>");
     html = html.replace(italicPattern, "<em>$1</em>");
     html = html.replace(underlinePattern, "<u>$1</u>");

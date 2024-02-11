@@ -1,6 +1,6 @@
 /*Birdhouse was created and published by Felix T. Vogel in 2024*/
 
-import { hooks, hook, triggerHook } from './modules/hooks.js';
+import { } from './modules/hooks.js';
 import PopupManager from './modules/popupManager.js';
 import { updateNotes } from '../../updateNotes.js';
 import { getSetting } from "./modules/database-settings.js";
@@ -36,7 +36,7 @@ async function fetchUserData() {
         if (!userData) {
             fetchingUserData = true;
             try {
-                const response = await triggerHook('fetch-user-data') || null;
+                const response = await window.triggerHook('fetch-user-data') || null;
                 userData = await response.json();
                 retryDelay = 1000;
                 if (hadError) {
@@ -58,7 +58,7 @@ async function fetchUserData() {
 }
 
 async function checkRememberMe() {
-    const remembered = await triggerHook('check-remember-me') || false;
+    const remembered = await window.triggerHook('check-remember-me') || false;
 
     if (remembered) {
         window.location.reload();
@@ -104,7 +104,7 @@ async function getIsUser() {
     if (userData) {
         if (userData.loggedIn && userData.isUser) {
             console.log("Logged in as user");
-            await triggerHook('user-logged-in');
+            await window.triggerHook('user-logged-in');
             return true;
         }
         else {
@@ -140,7 +140,7 @@ async function generateMenuHTML(routeType) {
     const menuItems = getMenuItems(routeType);
     let html = '';
 
-    html = await triggerHook('generate-menu-html', menuItems) || menuItems.map(item => {
+    html = await window.triggerHook('generate-menu-html', menuItems) || menuItems.map(item => {
         return `
         <a href="${item.path}"><span class="material-icons">${item.materialIcon}</span>${item.displayFull ? item.name : ''}</a>
         `;
@@ -302,7 +302,7 @@ if (updateButton) {
 }
 
 async function updateMaintenanceMode() {
-    isMaintenanceMode = await triggerHook('get-maintenance-mode') || isMaintenanceMode;
+    isMaintenanceMode = await window.triggerHook('get-maintenance-mode') || isMaintenanceMode;
 }
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -331,7 +331,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     popupManager = new PopupManager();
 
-    await triggerHook('create-routes');
+    await window.triggerHook('create-routes');
 
     await addAdminButtons();
     const content = document.getElementById("content");
@@ -391,7 +391,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         await updateMaintenanceMode();
 
-        let allowedPathsDuringMaintenance = await triggerHook('get-allowed-paths-during-maintenance') || [];
+        let allowedPathsDuringMaintenance = await window.triggerHook('get-allowed-paths-during-maintenance') || [];
 
         if (isMaintenanceMode && !allowedPathsDuringMaintenance.includes(path.replace(urlPrefix + '/', ''))) {
             component = await getComponent('components/maintenance.js');
@@ -406,7 +406,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             let route = findRoute(path);
 
             if (!route) {
-                dynamicRoute = await triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
+                dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
 
                 if (!route) {
                     route = findRoute(path);
@@ -536,7 +536,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 href = url.origin + url.pathname;
                 Analytics("Click: " + href);
 
-                let excludedRoutes = await triggerHook('get-spa-excluded-links') || [];
+                let excludedRoutes = await window.triggerHook('get-spa-excluded-links') || [];
 
                 excludedRoutes = excludedRoutes.map(route => { return urlPrefix + route.toLowerCase() });
 
@@ -593,10 +593,10 @@ document.addEventListener("DOMContentLoaded", async () => {
     }
 
     const menuHTML = await getMenuHTML();
-    await triggerHook('before-adding-base-content', menuHTML);
+    await window.triggerHook('before-adding-base-content', menuHTML);
 
     addBaseContent(`
-    ${await triggerHook('get-popup-menu-html', menuHTML) || ''}
+    ${await window.triggerHook('get-popup-menu-html', menuHTML) || ''}
 
 	<div id="updatePopup" class="popup">
 		<div class="popup-content big">
@@ -611,7 +611,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
 	<div id="storageAcknoledgementPopup" class="popup">
 		<div class="popup-content big">
-            ${await triggerHook('get-storage-acknoledgement-popup-content') || '<p>By clicking "I Understand and Agree", you allow this site to store cookies on your device and use the browsers local storage.</p>'}
+            ${await window.triggerHook('get-storage-acknoledgement-popup-content') || '<p>By clicking "I Understand and Agree", you allow this site to store cookies on your device and use the browsers local storage.</p>'}
 
             <div id="storageAcknoledgementButtonRow" class="inputRow center">
                 <button id="storageAcknoledgementPopupClose" class="closePopup closePopupIcon"><i class="material-icons">close</i></button>
@@ -630,7 +630,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 	</div>
         `);
 
-    await triggerHook('after-adding-base-content', menuHTML);
+    await window.triggerHook('after-adding-base-content', menuHTML);
 
     assignMenuButton();
     assignInstallButton();
@@ -642,7 +642,7 @@ document.addEventListener("DOMContentLoaded", async () => {
             setSessionStorageItem('denyStorage');
             const localStorageEntriesToDelete = ['selectedTheme', 'lastVisitedPage'];
             deleteSpecificLocalStorageEntries(localStorageEntriesToDelete);
-            const cookiesToDelete = await triggerHook('get-cookies-list') || [];
+            const cookiesToDelete = await window.triggerHook('get-cookies-list') || [];
             deleteSpecificCookies(cookiesToDelete);
             location.reload()
         });
@@ -773,7 +773,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     const currentYearElement = document.getElementById('currentYear');
     currentYearElement.textContent = config.foundationYear + ' - ' + currentYear + ' ';
 
-    triggerHook('page-loaded');
+    window.triggerHook('page-loaded');
 });
 
 export function addBaseContent(htmlContent) {

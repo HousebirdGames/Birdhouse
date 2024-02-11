@@ -1,6 +1,3 @@
-import { urlPrefix } from "../main.js";
-import { hooks, hook, triggerHook } from "./hooks.js";
-
 export function initializeInputValidation() {
     document.body.addEventListener('input', function (event) {
         validateInputs(event)
@@ -107,7 +104,7 @@ async function validateField(input, errorElement, serverSide = true) {
         return;
     }
 
-    const shouldClear = await triggerHook('validate-field', input, value, errorElement, serverSide);
+    const shouldClear = await window.triggerHook('validate-field', input, value, errorElement, serverSide);
 
     if (shouldClear != false) {
         clearError(input, errorElement);
