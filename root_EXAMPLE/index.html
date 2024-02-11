@@ -19,7 +19,7 @@
 	<meta name="theme-color" content="#ffffff">
 	<meta http-equiv="Content-Security-Policy"
 		content="default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self'; font-src 'self'; connect-src 'self'; object-src 'none';">
-	<link rel="stylesheet" href="birdhouse/style.css">
+	<link rel="stylesheet" href="birdhouse/default-style.css">
 	<link rel="stylesheet" href="style.css">
 	<link rel="manifest" href="manifest.json">
 	<script type="module" src="birdhouse/service-worker-registration.js"></script>
@@ -28,11 +28,9 @@
 <body class="displayNone">
 	<div id="adminBar"></div>
 	<div id="infoBar"></div>
-	<div id="header" class="noLogo fade-in-fast">
-		<header>
+	<header id="header" class="noLogo">
 			<p>HEADER</p>
-		</header>
-	</div>
+	</header>
 
 	<noscript>
 		<div class="javascriptWarning">
