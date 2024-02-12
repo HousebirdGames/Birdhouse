@@ -105,7 +105,7 @@ window.hook('get-cookies-list', async function () {
     // Let's add some default cookies to the list.
 
     let cookies = [
-        'storageAcknoledgement',
+        'storageAcknowledgement',
         'lastUpdateNote',
         'PHPSESSID'
     ];
@@ -138,8 +138,8 @@ window.hook('get-spa-excluded-links', async function () {
     return excludedRoutes;
 });
 
-window.hook('get-storage-acknoledgement-popup-content', async function () {
-    // Let's add some content to the storage acknoledgement popup.
+window.hook('get-storage-acknowledgement-popup-content', async function () {
+    // Let's add some content to the storage acknowledgement popup.
 
     const content = `
             <h1>Welcome!</h1>

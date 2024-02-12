@@ -87,7 +87,7 @@ footer {
     margin-left: 0.4rem;
 }
 
-#storageAcknoledgementButtonRow,
+#storageAcknowledgementButtonRow,
 #updateNotesButtonsContainer {
     display: flex;
     flex-direction: row;
