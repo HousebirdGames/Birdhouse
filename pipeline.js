@@ -36,6 +36,7 @@ const defaultConfig = {
     foundationYear: 2024,
     pageDescription: "",
     localhostPath: '/' + localhostPath,
+    excludedPaths: [],
     openCookiePopupAtPageLoad: true,
     showNewUpdateNotes: true,
     maintenanceModeWithFailedBackend: false,
@@ -55,9 +56,11 @@ const defaultPipelineConfig = {
     faviconsInputPath: 'img/logos-originals/Birdhouse-Logo.jpg',
     faviconsOutputDir: 'img/favicons',
     faviconsBaseFileName: 'Favicon',
+    faviconSizes: [],
     statisticsFile: 'pipeline-log.txt',
     ignoredFileTypes: ['.zip', '.rar', '.md', '.txt', '.psd', '.htaccess'],
     directoriesToInclude: ['src', 'fonts', 'img/logos', 'img/favicons', 'img/screenshots', 'fonts', 'uploads'],
+    directoriesToExcludeFromCache: ['img/screenshots', 'uploads'],
 };
 
 const initializeFlag = process.argv.includes('-init') || process.argv.includes('-initialize');
@@ -70,7 +73,7 @@ if (!initializeFlag) {
 
 const ignoredFileTypes = config.ignoredFileTypes ? config.ignoredFileTypes : [];
 const directoriesToInclude = config.directoriesToInclude;
-const cacheFile = './birdhouse/filesToCache.js';
+const cacheFile = './Birdhouse/filesToCache.js';
 const applicationPaths = {
     production: config.productionPath,
     staging: config.stagingPath
@@ -91,7 +94,7 @@ const compressedDir = config.compressedDir;
 const uncompressedDir = config.uncompressedDir;
 const htaccessFile = config.htaccessFile;
 const databaseDir = config.databaseDir;
-const faviconSizes = config.faviconSizes ? config.faviconSizes : [16, 32, 64, 128, 152, 167, 180, 192, 196];
+const faviconSizes = config.faviconSizes != [] ? config.faviconSizes : [16, 32, 48, 64, 72, 128, 152, 167, 180, 192, 196, 464, 3000];
 
 const updateFlag = process.argv.includes('-update') || process.argv.includes('-u');
 const updateRootFlag = process.argv.includes('-root') || process.argv.includes('-r');
@@ -105,6 +108,7 @@ const versionFlagIndex = process.argv.findIndex(arg => arg === '-version' || arg
 const helpFlag = process.argv.includes('-help') || process.argv.includes('-h');
 const infoFlag = process.argv.includes('-info') || process.argv.includes('-i');
 const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m');
+const skipCompressedUploadFlag = process.argv.includes('-skipCompU') || process.argv.includes('-su');
 const disableStatisticsFlag = process.argv.includes('-nolog') || process.argv.includes('-nl');
 const generateFaviconsFlag = process.argv.includes('-genfavicons') || process.argv.includes('-gf');
 const fileTypeCounts = {};
@@ -131,6 +135,7 @@ function help() {
         -m, -minify             Minifies the files in filesToCache.js (before uploading them to the server)
         -p, -production         Release to production
         -s, -staging            Release to staging (is ignored if -p is set)
+        -su,-skipCompU          Skips image compression and upload of the compressed folder
         -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
         `);
         process.exit(0);
@@ -198,7 +203,7 @@ async function main() {
         await updateVersion(newVersion);
     }
 
-    await createConfigForServiceWorker()
+    await createConfigForServiceWorker();
 
     const filesToCache = await getFilesToCache();
 
@@ -246,7 +251,7 @@ async function main() {
 }
 
 async function initializeProject() {
-    const sourceDir = './birdhouse/root_EXAMPLE';
+    const sourceDir = './Birdhouse/root_EXAMPLE';
     const targetDir = './';
 
     console.log('');
@@ -263,8 +268,8 @@ async function initializeProject() {
         await updateConfig();
         await updatePipelineConfig();
         await updateRoot();
-        await generateFavicons();
         console.log('');
+        await generateFavicons();
         console.log(chalk.green('Project initialized'));
         console.log('');
     }
@@ -522,7 +527,7 @@ async function updatePipelineConfig() {
 
 async function updateRoot() {
     console.log(chalk.gray('Updating root directory...'));
-    const sourceDir = './birdhouse/root';
+    const sourceDir = './Birdhouse/root';
     const destDir = './';
 
     const files = await fsPromises.readdir(sourceDir);
@@ -535,6 +540,11 @@ async function updateRoot() {
 }
 
 async function compressImages() {
+    if (skipCompressedUploadFlag) {
+        console.log(chalk.grey('Skipping image compression, because compressed uploads are skipped.'));
+        return;
+    }
+
     if (!uncompressedDir) {
         console.log(chalk.yellow('No uncompressed directory specified. Skipping image compression.'));
         return;
@@ -651,7 +661,7 @@ async function createConfigForServiceWorker() {
         console.log('Created empty config-sw.js');
     }
 
-    let data = await fsPromises.readFile(swFilePath, 'utf8');
+    let data = await fsPromises.readFile(filePath, 'utf8');
     data = data.replace('export default {', 'self.config = {');
     await fsPromises.writeFile(swFilePath, data, 'utf8');
     console.log('Created config for the service worker');
@@ -670,9 +680,9 @@ async function getFilesToCache() {
         'manifest.json',
         'admin-style.css',
         'style.css',
-        'birdhouse/default-style.css',
-        'birdhouse/filesToCache.js',
-        'birdhouse/service-worker-registration.js',
+        'Birdhouse/default-style.css',
+        'Birdhouse/filesToCache.js',
+        'Birdhouse/service-worker-registration.js',
     ];
 
     if (infoFlag) {
@@ -682,8 +692,8 @@ async function getFilesToCache() {
         });
     }
 
-    directoriesToInclude.push('birdhouse/src');
-    directoriesToInclude.push('birdhouse/fonts');
+    directoriesToInclude.push('Birdhouse/src');
+    directoriesToInclude.push('Birdhouse/fonts');
 
     for (const dir of directoriesToInclude) {
         infoFlag && console.log(chalk.gray(`Reading files from ${dir}...`));
@@ -722,18 +732,22 @@ async function writeFilesToCacheFile(filesToCache) {
     console.log('');
 
     let totalSize = 0;
+    const filteredFilesToCache = filesToCache.filter(file => {
+        return !config.directoriesToExcludeFromCache.some(dir => file.startsWith(dir));
+    });
+
     if (cacheFlag) {
-        console.log(chalk.gray(`Writing ${filesToCache.length} files to ${cacheFile}...`));
+        console.log(chalk.gray(`Writing ${filteredFilesToCache.length} files to ${cacheFile}...`));
 
         let fileContent = 'self.filesToCache = [\n';
-        fileContent += filesToCache.map(f => `'/${f}',`.replace(/\\/g, '/')).join('\n');
+        fileContent += filteredFilesToCache.map(f => `'/${f}',`.replace(/\\/g, '/')).join('\n');
         fileContent += '\n];';
         await fsPromises.writeFile(cacheFile, fileContent, 'utf8');
         const stats = statSync(cacheFile);
         totalSize += stats.size;
     }
 
-    filesToCache.forEach(file => {
+    filteredFilesToCache.forEach(file => {
         infoFlag && console.log(chalk.gray(`    File: ${file}`));
 
         if (file != cacheFile) {
@@ -751,6 +765,11 @@ async function writeFilesToCacheFile(filesToCache) {
 async function uploadFilesToServer(filesToCache, applicationPath) {
     if (!productionFlag && !stagingFlag) return;
 
+
+    if (skipCompressedUploadFlag) {
+        console.log(chalk.grey('Skipping files that are in the compressed directory.'))
+        filesToCache = filesToCache.filter(file => !file.startsWith(config.compressed));
+    }
     let filesToUpload = [...filesToCache, './Birdhouse/filesToCache.js'];
 
     if (databaseDir) {
@@ -995,8 +1014,6 @@ function getApplicationPath() {
 }
 
 async function generateFavicons() {
-    console.log('');
-
     if (!faviconsInputPath) {
         console.log(chalk.yellow('No input path for the original favicon specified. Skipping favicon generation.'));
         return;
@@ -1030,6 +1047,7 @@ async function generateFavicons() {
     }
 
     console.log(chalk.green(`Favicons generated successfully`));
+    console.log('');
 }
 
 main().catch(err => console.error(chalk.red('An error occurred in the pipeline:', err.message)));

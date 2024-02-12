@@ -1,4 +1,4 @@
-import { alertPopup } from "../birdhouse/src/main.js";
+import { alertPopup } from "../Birdhouse/src/main.js";
 
 navigator.serviceWorker.register('service-worker.js').then(function (registration) {
     registration.addEventListener('updatefound', () => {

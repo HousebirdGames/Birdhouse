@@ -1,6 +1,6 @@
 self.CACHE_VERSION = "1.0.0.0";
 importScripts('./config-sw.js');
-self.importScripts('birdhouse/filesToCache.js' + `?v=${self.CACHE_VERSION}`);
+self.importScripts('Birdhouse/filesToCache.js' + `?v=${self.CACHE_VERSION}`);
 
 self.addEventListener('install', function (event) {
     event.waitUntil(cacheFiles().then(() => self.skipWaiting()));
@@ -41,7 +41,7 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', function (event) {
     var request = event.request;
 
-    if (request.url.includes('/adventskalender')) {
+    if (self.config.excludedPaths.some(path => request.url.includes(path))) {
         event.respondWith(fetch(request));
         return;
     }

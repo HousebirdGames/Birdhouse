@@ -1,6 +1,6 @@
 // Required imports
-import * as main from "./birdhouse/src/main.js";
-import { displayError, clearError } from "./birdhouse/src/modules/input-validation.js";
+import * as main from "./Birdhouse/src/main.js";
+import { displayError, clearError } from "./Birdhouse/src/modules/input-validation.js";
 
 // Your custom imports
 import Example from './src/components/example.js';
@@ -15,6 +15,18 @@ window.hook('before-adding-base-content', async function (menuHTML) {
     }
 
     headerElement.innerHTML = menuHTML;
+});
+
+window.hook('on-handle-route-change', async function () {
+    // This hook will get triggered as soon as a route change is started.
+});
+
+window.hook('on-component-loaded', async function () {
+    // This hook will get triggered, when a component is successfully loaded.
+});
+
+window.hook('on-content-loaded', async function () {
+    // This hook will get triggered, when the content is displayed (i.e. of a component).
 });
 
 window.hook('get-popup-menu-html', async function (menuHTML) {
@@ -270,4 +282,12 @@ window.hook('validate-field', async function (input, value, errorElement, server
     }
 
     //Please remember, that all input/textarea elements should have a label element surrounding them. This is needed for the automatic error message placement.
+});
+
+window.hook('get-loading-content', async function () {
+    //This will be in the content section until the current component is loaded. You can place skeleton loaders or a loading symbol here or just return an empty string.
+
+    return `
+    <p>The page is loading...</p>
+    `;
 });

@@ -1,11 +1,11 @@
 /*Birdhouse was created and published by Felix T. Vogel in 2024*/
 
-import { } from '../../birdhouse/src/modules/hooks.js';
-import PopupManager from '../../birdhouse/src/modules/popupManager.js';
+import { } from '../../Birdhouse/src/modules/hooks.js';
+import PopupManager from '../../Birdhouse/src/modules/popupManager.js';
 import { updateNotes } from '../../updateNotes.js';
-import { getSetting } from "../../birdhouse/src/modules/database-settings.js";
-import Analytics from "../../birdhouse/src/modules/analytics.js";
-import { initializeInputValidation } from '../../birdhouse/src/modules/input-validation.js';
+import { getSetting } from "../../Birdhouse/src/modules/database-settings.js";
+import Analytics from "../../Birdhouse/src/modules/analytics.js";
+import { initializeInputValidation } from '../../Birdhouse/src/modules/input-validation.js';
 import { } from '../../everywhere.js';
 import config from '../../config.js';
 
@@ -25,7 +25,7 @@ function sanitizeIdentifier(title) {
 }
 
 if (config.enableImageComparisonSliders) {
-    loadCSS(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
+    loadCSS(urlPrefix + '/Birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
 }
 
 let retryDelay = 1000;
@@ -355,6 +355,8 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         isHandlingRouteChange = true;
 
+        await window.triggerHook('on-handle-route-change');
+
         if (config.enableInfoBar) {
             const infoBar = document.getElementById('infoBar');
             let infoText = '<p>Infos could not be retrieved: Please contact us</p>';
@@ -384,9 +386,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         content.classList.remove('fade-in-fast');
 
-        content.innerHTML = `
-        <div class="loadingSymbolWrap"><div class="loadingSymbol"></div></div>
-        `;
+        content.innerHTML = await window.triggerHook('get-loading-content');
 
         path = normalizePath(window.location.pathname);
 
@@ -424,8 +424,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             component = route ? route.Handler : null;
         }
 
-        if (getCookie("storageAcknoledgement") != 'true' && !getSessionStorageItem('denyStorage')) {
-            popupManager.openPopup("storageAcknoledgementPopup");
+        if (getCookie("storageAcknowledgement") != 'true' && !getSessionStorageItem('denyStorage') && config.openCookiePopupAtPageLoad) {
+            popupManager.openPopup("storageAcknowledgementPopup");
         }
 
         if (!component) {
@@ -437,9 +437,10 @@ document.addEventListener("DOMContentLoaded", async () => {
         } else {
             if (content) {
                 try {
-                    let contentHTML = '<div class="contentBox"><div class="loadingSymbol"></div></div>';
+                    let contentHTML = '';
 
                     contentHTML = await component();
+                    window.triggerHook('on-component-loaded');
 
                     content.innerHTML = contentHTML;
 
@@ -450,6 +451,8 @@ document.addEventListener("DOMContentLoaded", async () => {
                 }
             }
         }
+
+        window.triggerHook('on-content-loaded');
 
         initializeCookiesAndStoragePopupButtons();
 
@@ -514,7 +517,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         if (config.enableImageComparisonSliders) {
             try {
-                const module = await import(urlPrefix + '/birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
+                const module = await import(urlPrefix + '/Birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
                 module.initImageComparisons();
             } catch (err) {
                 console.error('Failed to load module', err);
@@ -531,9 +534,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         linkClickListener = async function (event) {
+            let linkElement;
             if (event.target.tagName === 'A') {
-                const link = event.target;
-                let href = link.getAttribute('href');
+                linkElement = event.target;
+            }
+            else if (event.target.parentElement.tagName === 'A') {
+                linkElement = event.target.parentElement;
+            }
+
+            if (linkElement) {
+                let href = linkElement.getAttribute('href');
 
                 const url = new URL(href, window.location.href);
                 href = url.origin + url.pathname;
@@ -541,19 +551,19 @@ document.addEventListener("DOMContentLoaded", async () => {
 
                 let excludedRoutes = await window.triggerHook('get-spa-excluded-links') || [];
 
-                excludedRoutes = excludedRoutes.map(route => { return urlPrefix + route.toLowerCase() });
+                excludedRoutes = excludedRoutes.map(route => { return route.toLowerCase() });
 
                 if (excludedRoutes.includes(getRelativePath(href))) {
                     return;
                 }
 
-                if (link.hostname !== window.location.hostname) {
+                if (linkElement.hostname !== window.location.hostname) {
                     return;
                 }
 
                 event.preventDefault();
                 if (!href.startsWith('#')) {
-                    const normalizedHref = normalizePath(link.href);
+                    const normalizedHref = normalizePath(linkElement.href);
                     history.pushState(null, '', normalizedHref);
                     handleRouteChange();
                 }
@@ -561,20 +571,20 @@ document.addEventListener("DOMContentLoaded", async () => {
         };
 
         document.body.addEventListener('click', linkClickListener);
-
-        document.addEventListener('change', (event) => {
-            const checkbox = event.target;
-            if (checkbox.type === 'checkbox') {
-                if (checkbox.checked) {
-                    checkbox.classList.add('animate');
-
-                    setTimeout(() => {
-                        checkbox.classList.remove('animate');
-                    }, 400);
-                }
-            }
-        });
     }
+
+    document.addEventListener('change', (event) => {
+        const checkbox = event.target;
+        if (checkbox.type === 'checkbox') {
+            if (checkbox.checked) {
+                checkbox.classList.add('animate');
+
+                setTimeout(() => {
+                    checkbox.classList.remove('animate');
+                }, 400);
+            }
+        }
+    });
 
     function scroll() {
         const hash = window.location.hash.substring(1);
@@ -612,14 +622,14 @@ document.addEventListener("DOMContentLoaded", async () => {
 		</div>
 	</div>
 
-	<div id="storageAcknoledgementPopup" class="popup">
+	<div id="storageAcknowledgementPopup" class="popup">
 		<div class="popup-content big">
-            ${await window.triggerHook('get-storage-acknoledgement-popup-content') || '<p>By clicking "I Understand and Agree", you allow this site to store cookies on your device and use the browsers local storage.</p>'}
+            ${await window.triggerHook('get-storage-acknowledgement-popup-content') || '<p>By clicking "I Understand and Agree", you allow this site to store cookies on your device and use the browsers local storage.</p>'}
 
-            <div id="storageAcknoledgementButtonRow" class="inputRow center">
-                <button id="storageAcknoledgementPopupClose" class="closePopup closePopupIcon"><i class="material-icons">close</i></button>
+            <div id="storageAcknowledgementButtonRow" class="inputRow center">
+                <button id="storageAcknowledgementPopupClose" class="closePopup closePopupIcon"><i class="material-icons">close</i></button>
                 <button id="clearButton" class="centerText">Deny permission<br>(deletes cookies<br>& local storage)</button>
-                <button id="storageAcknoledgementButton" class="closePopup centerText">I understand<br>and agree</button>
+                <button id="storageAcknowledgementButton" class="closePopup centerText">I understand<br>and agree</button>
             </div>
 		</div>
 	</div>
@@ -641,13 +651,13 @@ document.addEventListener("DOMContentLoaded", async () => {
     const clearButton = document.getElementById("clearButton");
     if (clearButton) {
         clearButton.addEventListener("click", async () => {
-            Analytics('Revoked storage acknoledgement');
+            Analytics('Revoked storage acknowledgement');
             setSessionStorageItem('denyStorage');
             const localStorageEntriesToDelete = ['selectedTheme', 'lastVisitedPage'];
             deleteSpecificLocalStorageEntries(localStorageEntriesToDelete);
             const cookiesToDelete = await window.triggerHook('get-cookies-list') || [];
             deleteSpecificCookies(cookiesToDelete);
-            location.reload()
+            location.reload();
         });
     }
 
@@ -656,19 +666,19 @@ document.addEventListener("DOMContentLoaded", async () => {
         if (openAcknowledgementButtons) {
             openAcknowledgementButtons.forEach(openAcknowledgementButton => {
                 openAcknowledgementButton.addEventListener("click", () => {
-                    popupManager.openPopup("storageAcknoledgementPopup");
+                    popupManager.openPopup("storageAcknowledgementPopup");
                 });
             });
         }
     }
 
-    const storageAcknoledgementButton = document.getElementById("storageAcknoledgementButton");
-    if (storageAcknoledgementButton) {
-        storageAcknoledgementButton.addEventListener("click", () => {
-            Analytics('Gave storage acknoledgement');
-            const wasTrue = getCookie("storageAcknoledgement") === 'true';
-            setCookie("storageAcknoledgement", true, 365);
-            popupManager.closePopup("storageAcknoledgementPopup");
+    const storageAcknowledgementButton = document.getElementById("storageAcknowledgementButton");
+    if (storageAcknowledgementButton) {
+        storageAcknowledgementButton.addEventListener("click", () => {
+            Analytics('Gave storage acknowledgement');
+            const wasTrue = getCookie("storageAcknowledgement") === 'true';
+            setCookie("storageAcknowledgement", true, 365);
+            popupManager.closePopup("storageAcknowledgementPopup");
             deleteSessionStorageItem('denyStorage');
             if (!wasTrue) {
                 location.reload();
@@ -688,11 +698,11 @@ document.addEventListener("DOMContentLoaded", async () => {
         });
     }
 
-    if (getCookie("storageAcknoledgement") === 'true' || getSessionStorageItem('denyStorage')) {
-        popupManager.closePopup("storageAcknoledgementPopup");
+    if (getCookie("storageAcknowledgement") === 'true' || getSessionStorageItem('denyStorage')) {
+        popupManager.closePopup("storageAcknowledgementPopup");
     }
     else if (config.openCookiePopupAtPageLoad) {
-        popupManager.openPopup("storageAcknoledgementPopup");
+        popupManager.openPopup("storageAcknowledgementPopup");
     }
 
     const updateNotesButtons = document.querySelectorAll(".updateNotesButton");
@@ -750,7 +760,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                 const updateConfirm = document.getElementById("updateConfirm");
                 if (updateConfirm) {
                     updateConfirm.addEventListener("click", (event) => {
-                        if (getCookie("storageAcknoledgement") === "true") {
+                        if (getCookie("storageAcknowledgement") === "true") {
                             Analytics('Confirmed updated notes');
                             setCookie("lastUpdateNote", latestPatch.version, 365);
                         }
@@ -761,7 +771,7 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
     }
 
-    if (getCookie("storageAcknoledgement") == 'true') {
+    if (getCookie("storageAcknowledgement") == 'true') {
         showUpdateNotes();
     }
 
@@ -985,7 +995,7 @@ export function getCookie(name) {
 }
 
 export function setSessionStorageItem(key, value) {
-    if (getCookie("storageAcknoledgement") === 'true' || key == "denyStorage") {
+    if (getCookie("storageAcknowledgement") === 'true' || key == "denyStorage") {
         try {
             sessionStorage.setItem(key, value);
         } catch (e) {
@@ -995,7 +1005,7 @@ export function setSessionStorageItem(key, value) {
 }
 
 export function getSessionStorageItem(key) {
-    if (getCookie("storageAcknoledgement") === 'true' || key == "denyStorage") {
+    if (getCookie("storageAcknowledgement") === 'true' || key == "denyStorage") {
         try {
             return sessionStorage.getItem(key);
         } catch (e) {
@@ -1014,7 +1024,7 @@ export function deleteSessionStorageItem(key) {
 }
 
 export function setLocalStorageItem(key, value) {
-    if (getCookie("storageAcknoledgement") === 'true') {
+    if (getCookie("storageAcknowledgement") === 'true') {
         try {
             localStorage.setItem(key, value);
         } catch (e) {
@@ -1024,7 +1034,7 @@ export function setLocalStorageItem(key, value) {
 }
 
 export function getLocalStorageItem(key) {
-    if (getCookie("storageAcknoledgement") === 'true') {
+    if (getCookie("storageAcknowledgement") === 'true') {
         try {
             return localStorage.getItem(key);
         } catch (e) {

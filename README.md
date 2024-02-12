@@ -118,6 +118,7 @@ pipeline.js -p -c -m -v 1.2.3.4
 - `-backup` or `-b`: Creates a backup before deploying the new version that can be rolled back to.
 - `-rollback` or `-r`: Rollback to the backup version of either staging (`-s`) or production (`-p`), when available on the server.
 - `-info` or `-i`: Display detailed information about the process.
+- `-skipCompU` or `-su`: Skips image compression and upload of the compressed folder, which is faster in some scenarios, where repeated uploads of the folder are not neccessary.
 - `-genfavicons` or `-gf`: Create favicons of all sizes from the original favicon and exits after that.
 
 The script automates various tasks, including version number updates, cache list generation, and file uploads to the server. Ensure you have the necessary permissions for file operations and SFTP server access.
