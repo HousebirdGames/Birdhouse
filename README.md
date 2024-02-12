@@ -1,3 +1,7 @@
+<p align="center">
+  <img src="https://github.com/HousebirdGames/Birdhouse/blob/main/root_EXAMPLE/img/logos-originals/Birdhouse-Logo.jpg?raw=true" width="200">
+</p>
+
 # **Birdhouse**
 ## Introduction
 
