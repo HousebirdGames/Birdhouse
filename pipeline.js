@@ -183,7 +183,8 @@ async function main() {
     if (!sftpConfigFile.sftpPassword) missingConfigs.push('sftpPassword');
 
     if (missingConfigs.length > 0) {
-        console.error('Error: Missing necessary configuration values in pipeline.config.js:', missingConfigs.join(', '));
+        console.error('Error: Missing necessary configuration values in sftp-config.js:', missingConfigs.join(', '));
+        console.log('');
         process.exit(1);
     }
 
