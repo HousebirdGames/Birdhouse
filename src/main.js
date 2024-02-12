@@ -1,11 +1,11 @@
 /*Birdhouse was created and published by Felix T. Vogel in 2024*/
 
-import { } from './modules/hooks.js';
-import PopupManager from './modules/popupManager.js';
+import { } from '../../birdhouse/src/modules/hooks.js';
+import PopupManager from '../../birdhouse/src/modules/popupManager.js';
 import { updateNotes } from '../../updateNotes.js';
-import { getSetting } from "./modules/database-settings.js";
-import Analytics from "./modules/analytics.js";
-import { initializeInputValidation } from './modules/input-validation.js';
+import { getSetting } from "../../birdhouse/src/modules/database-settings.js";
+import Analytics from "../../birdhouse/src/modules/analytics.js";
+import { initializeInputValidation } from '../../birdhouse/src/modules/input-validation.js';
 import { } from '../../everywhere.js';
 import config from '../../config.js';
 

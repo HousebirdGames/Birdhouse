@@ -1,4 +1,4 @@
-import { resizeAllTextareas } from "../main.js";
+import { resizeAllTextareas } from "../../../birdhouse/src/main.js";
 
 export default class PopupManager {
     constructor() {
