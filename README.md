@@ -1,8 +1,9 @@
 <p align="center">
-  <img src="https://github.com/HousebirdGames/Birdhouse/blob/main/root_EXAMPLE/img/logos-originals/Birdhouse-Logo.jpg?raw=true" width="200">
+  <img src="https://github.com/HousebirdGames/Birdhouse/blob/main/root_EXAMPLE/img/logos-originals/Birdhouse-Logo.png?raw=true" width="200">
 </p>
 
 # **Birdhouse**
+
 ## Introduction
 
 **Birdhouse** is a Vanilla JavaScript framework for Single Page Applications and supports easy Progressive Web App rollouts through its NodeJS Pipeline. Birdhouse is primarily designed for deployment to Apache Webserver Webspaces via SFTP. However, with necessary modifications, it can also be adapted for use in other environments. Everything is provided as is.
