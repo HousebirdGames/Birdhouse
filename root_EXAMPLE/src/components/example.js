@@ -1,4 +1,4 @@
-import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup } from "../../birdhouse/src/main.js";
+import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup } from "../../Birdhouse/src/main.js";
 
 export default async function Example(exampleData) {
     updateTitleAndMeta('Example Page', 'This is an example page.');

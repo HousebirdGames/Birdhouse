@@ -1,4 +1,4 @@
-import { updateTitleAndMeta } from "../../birdhouse/src/main.js";
+import { updateTitleAndMeta } from "../../Birdhouse/src/main.js";
 
 export default async function ExampleInputs() {
     updateTitleAndMeta('Example Inputs', 'This is an input example page.');
