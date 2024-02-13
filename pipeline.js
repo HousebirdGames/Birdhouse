@@ -47,6 +47,7 @@ const defaultConfig = {
 };
 
 const defaultPipelineConfig = {
+    sftpConfigFile: '../sftp-config.js',
     productionPath: 'my_app_production',
     stagingPath: 'my_app_staging',
     htaccessFile: 'UPLOAD-THIS.htaccess',
@@ -68,7 +69,18 @@ let config = defaultPipelineConfig;
 let sftpConfigFile = null;
 if (!initializeFlag) {
     config = require('../pipeline-config.js');
-    sftpConfigFile = require('../sftp-config.js');
+
+    if (!config) {
+        console.log(chalk.red('The pipeline-config.js not found. It should be in the root directory of the project. Use the "-update" flag to create it.'));
+        process.exit(1);
+    }
+
+    const sftpConfigFilePath = '../' + (config.sftpConfigFile ? config.sftpConfigFile : '../sftp-config.js');
+    sftpConfigFile = require(sftpConfigFilePath);
+    if (!sftpConfigFile) {
+        console.log(chalk.red('The sftp-config.js not found. By default it should be placed in the parent directory of the project. Use the "-root" flag to copy an example file to the root of your project.'));
+        process.exit(1);
+    }
 }
 
 const ignoredFileTypes = config.ignoredFileTypes ? config.ignoredFileTypes : [];

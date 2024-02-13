@@ -1,5 +1,5 @@
 self.CACHE_VERSION = "1.0.0.0";
-importScripts('./config-sw.js');
+importScripts('./config-sw.js' + `?v=${self.CACHE_VERSION}`);
 self.importScripts('Birdhouse/filesToCache.js' + `?v=${self.CACHE_VERSION}`);
 
 self.addEventListener('install', function (event) {
@@ -41,7 +41,7 @@ self.addEventListener('message', event => {
 self.addEventListener('fetch', function (event) {
     var request = event.request;
 
-    if (self.config.excludedPaths.some(path => request.url.includes(path))) {
+    if (self.config && self.config.excludedPaths && self.config.excludedPaths.some(path => request.url.includes(path))) {
         event.respondWith(fetch(request));
         return;
     }
