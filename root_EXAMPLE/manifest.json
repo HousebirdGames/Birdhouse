@@ -10,43 +10,43 @@
     "theme_color": "#ffffff",
     "icons": [
         {
-            "src": "img/favicons/Favicon-48x48.png",
+            "src": "img/icons/Icon-48x48.png",
             "sizes": "48x48",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "img/favicons/Favicon-48x48.png",
+            "src": "img/icons/Icon-48x48.png",
             "sizes": "48x48",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "img/favicons/Favicon-72x72.png",
+            "src": "img/icons/Icon-72x72.png",
             "sizes": "72x72",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "img/favicons/Favicon-72x72.png",
+            "src": "img/icons/Icon-72x72.png",
             "sizes": "72x72",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "img/favicons/Favicon-464x464.png",
+            "src": "img/icons/Icon-464x464.png",
             "sizes": "464x464",
             "type": "image/png",
             "purpose": "any"
         },
         {
-            "src": "img/favicons/Favicon-464x464.png",
+            "src": "img/icons/Icon-464x464.png",
             "sizes": "464x464",
             "type": "image/png",
             "purpose": "maskable"
         },
         {
-            "src": "img/favicons/Favicon-3000x3000.png",
+            "src": "img/icons/Icon-3000x3000.png",
             "sizes": "3000x3000",
             "type": "image/png",
             "purpose": "maskable"

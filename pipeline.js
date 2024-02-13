@@ -54,10 +54,14 @@ const defaultPipelineConfig = {
     databaseDir: 'database',
     uncompressedDir: 'img/uploads-uncompressed',
     compressedDir: 'uploads',
-    faviconsInputPath: 'img/logos-originals/Birdhouse-Logo.jpg',
+    faviconPath: 'img/logos-originals/Birdhouse-Logo.jpg',
     faviconsOutputDir: 'img/favicons',
-    faviconsBaseFileName: 'Favicon',
+    faviconsFileName: 'Favicon',
     faviconSizes: [],
+    manifestIconPath: 'img/logos-originals/Birdhouse-Logo.png',
+    manifestIconOutputDir: 'img/icons',
+    manifestIconFileName: 'Icon',
+    manifestIconSizes: [],
     statisticsFile: 'pipeline-log.txt',
     ignoredFileTypes: ['.zip', '.rar', '.md', '.txt', '.psd', '.htaccess'],
     directoriesToInclude: ['src', 'fonts', 'img/logos', 'img/favicons', 'img/screenshots', 'fonts', 'uploads'],
@@ -98,15 +102,19 @@ const sftpConfig = {
 };
 
 const minifiedDirectory = 'Birdhouse/minified';
-const faviconsBaseFileName = config.faviconsBaseFileName;
-const faviconsInputPath = config.faviconsInputPath;
+const faviconsFileName = config.faviconsFileName;
+const faviconPath = config.faviconPath;
 const faviconsOutputDir = config.faviconsOutputDir;
+const faviconSizes = config.faviconSizes.length > 0 ? config.faviconSizes : [16, 32, 64, 128, 152, 167, 180, 192, 196];
 const statisticsFile = config.statisticsFile;
 const compressedDir = config.compressedDir;
 const uncompressedDir = config.uncompressedDir;
 const htaccessFile = config.htaccessFile;
 const databaseDir = config.databaseDir;
-const faviconSizes = config.faviconSizes != [] ? config.faviconSizes : [16, 32, 48, 64, 72, 128, 152, 167, 180, 192, 196, 464, 3000];
+const manifestIconFileName = config.manifestIconFileName;
+const manifestIconPath = config.manifestIconPath;
+const manifestIconOutputDir = config.manifestIconOutputDir;
+const manifestIconSizes = config.faviconSizes.length > 0 ? config.faviconSizes : [48, 72, 464, 3000];
 
 const updateFlag = process.argv.includes('-update') || process.argv.includes('-u');
 const updateRootFlag = process.argv.includes('-root') || process.argv.includes('-r');
@@ -123,6 +131,7 @@ const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m
 const skipCompressedUploadFlag = process.argv.includes('-skipCompU') || process.argv.includes('-su');
 const disableStatisticsFlag = process.argv.includes('-nolog') || process.argv.includes('-nl');
 const generateFaviconsFlag = process.argv.includes('-genfavicons') || process.argv.includes('-gf');
+const generateIconsFlag = process.argv.includes('-genicons') || process.argv.includes('-gi');
 const fileTypeCounts = {};
 let fileTypeSizes = {};
 
@@ -149,6 +158,7 @@ function help() {
         -s, -staging            Release to staging (is ignored if -p is set)
         -su,-skipCompU          Skips image compression and upload of the compressed folder
         -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
+        -gi,-genicons           Creates icons of all sizes from the original icon and exits
         `);
         process.exit(0);
     }
@@ -179,7 +189,12 @@ async function main() {
     }
 
     if (generateFaviconsFlag) {
-        await generateFavicons();
+        await generateImageSizes(faviconPath, faviconsOutputDir, faviconsFileName, faviconSizes);
+        process.exit(0);
+    }
+
+    if (generateIconsFlag) {
+        await generateImageSizes(manifestIconPath, manifestIconOutputDir, manifestIconFileName, manifestIconSizes);
         process.exit(0);
     }
 
@@ -282,7 +297,9 @@ async function initializeProject() {
         await updatePipelineConfig();
         await updateRoot();
         console.log('');
-        await generateFavicons();
+        await generateImageSizes(faviconPath, faviconsOutputDir, faviconsFileName, faviconSizes);
+        await generateImageSizes(manifestIconPath, manifestIconOutputDir, manifestIconFileName, manifestIconSizes);
+
         console.log(chalk.green('Project initialized'));
         console.log('');
     }
@@ -1026,31 +1043,31 @@ function getApplicationPath() {
     return productionFlag ? applicationPaths.production : applicationPaths.staging;
 }
 
-async function generateFavicons() {
-    if (!faviconsInputPath) {
-        console.log(chalk.yellow('No input path for the original favicon specified. Skipping favicon generation.'));
+async function generateImageSizes(inputPath, outputDir, fileName, sizes) {
+    if (!inputPath) {
+        console.log(chalk.yellow('No input path for the original image specified. Skipping generation.'));
         return;
     }
-    else if (!faviconsOutputDir) {
-        console.log(chalk.yellow('No output directory specified. Skipping favicon generation.'));
+    else if (!outputDir) {
+        console.log(chalk.yellow('No output directory specified. Skipping generation.'));
         return;
     }
-    else if (!faviconsBaseFileName) {
-        console.log(chalk.yellow('No base file name specified. Skipping favicon generation.'));
+    else if (!fileName) {
+        console.log(chalk.yellow('No file name specified. Skipping generation.'));
         return;
     }
 
-    console.log(chalk.grey(`Generating favicons...`));
+    console.log(chalk.grey(`Generating ${sizes.length} "${fileName}"-images...`));
 
-    if (!fs.existsSync(faviconsOutputDir)) {
-        console.log(chalk.grey(`Creating output directory: ${faviconsOutputDir}`));
-        fs.mkdirSync(faviconsOutputDir, { recursive: true });
+    if (!fs.existsSync(outputDir)) {
+        console.log(chalk.grey(`Creating output directory: ${outputDir}`));
+        fs.mkdirSync(outputDir, { recursive: true });
     }
 
-    for (const size of faviconSizes) {
+    for (const size of sizes) {
         try {
-            const outputPath = path.join(faviconsOutputDir, `${faviconsBaseFileName}-${size}x${size}.png`);
-            await sharp(faviconsInputPath)
+            const outputPath = path.join(outputDir, `${fileName}-${size}x${size}.png`);
+            await sharp(inputPath)
                 .resize(size, size)
                 .toFile(outputPath);
             infoFlag && console.log(chalk.grey(`    Resized image to ${size}x${size} and saved to ${outputPath}`));
@@ -1059,7 +1076,7 @@ async function generateFavicons() {
         }
     }
 
-    console.log(chalk.green(`Favicons generated successfully`));
+    console.log(chalk.green(`Images generated successfully`));
     console.log('');
 }
 
