@@ -784,7 +784,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     const currentYear = new Date().getFullYear();
     const currentYearElement = document.getElementById('currentYear');
-    currentYearElement.textContent = config.foundationYear + ' - ' + currentYear + ' ';
+    currentYearElement.textContent = currentYear > config.foundationYear ? config.foundationYear + ' - ' + currentYear + ' ' : config.foundationYear + ' ';
 
     window.triggerHook('page-loaded');
 });
