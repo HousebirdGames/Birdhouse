@@ -64,7 +64,7 @@ const defaultPipelineConfig = {
     manifestIconSizes: [],
     statisticsFile: 'pipeline-log.txt',
     ignoredFileTypes: ['.zip', '.rar', '.md', '.txt', '.psd', '.htaccess'],
-    directoriesToInclude: ['src', 'fonts', 'img/favicons', 'img/screenshots', 'uploads'],
+    directoriesToInclude: ['src', 'fonts', 'img/favicons', 'img/icons', 'img/screenshots', 'uploads'],
     directoriesToExcludeFromCache: ['img/screenshots', 'uploads'],
 };
 
