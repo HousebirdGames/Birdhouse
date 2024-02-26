@@ -68,7 +68,7 @@ footer {
 #content {
     display: flex;
     flex-direction: column;
-    height: 100lvh;
+    min-height: 100lvh;
     gap: var(--padding);
     padding: var(--padding);
     width: 24rem;
