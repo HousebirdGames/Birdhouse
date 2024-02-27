@@ -534,11 +534,16 @@ document.addEventListener("DOMContentLoaded", async () => {
         }
 
         linkClickListener = async function (event) {
+            if (!event.target || !event.target.tagName) {
+                return;
+            }
+
             let linkElement;
+
             if (event.target.tagName === 'A') {
                 linkElement = event.target;
             }
-            else if (event.target.parentElement.tagName === 'A') {
+            else if (event.target.parentElement && event.target.parentElement.tagName === 'A') {
                 linkElement = event.target.parentElement;
             }
 
