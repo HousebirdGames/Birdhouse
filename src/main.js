@@ -15,6 +15,45 @@ const redirect404ToHome = true;
 const anchorScrollOffset = 54;
 const excludedPaths = [].map(path => path.toLowerCase());
 
+const actions = [];
+
+export function action(action) {
+    if (typeof action === 'function') {
+        actions.push(action);
+    } else {
+        const handler = (event) => {
+            if (action.selector) {
+                if (event.target.matches(action.selector)) {
+                    action.handler(event);
+                }
+            } else {
+                action.handler(event);
+            }
+        };
+        actions.push({ ...action, handler });
+    }
+}
+
+function setupActions() {
+    for (const action of actions) {
+        if (typeof action === 'function') {
+            action();
+        } else {
+            document.addEventListener(action.type, action.handler);
+        }
+    }
+}
+
+function unmountActions() {
+    for (const action of actions) {
+        if (typeof action !== 'function') {
+            document.removeEventListener(action.type, action.handler);
+        }
+    }
+
+    actions.length = 0;
+}
+
 export let userData = null;
 let fetchingUserData = false;
 export let isMaintenanceMode = config.maintenanceModeWithFailedBackend != undefined ? config.maintenanceModeWithFailedBackend : true;
@@ -355,7 +394,10 @@ document.addEventListener("DOMContentLoaded", async () => {
 
         isHandlingRouteChange = true;
 
+        unmountActions();
+
         await window.triggerHook('on-handle-route-change');
+
 
         if (config.enableInfoBar) {
             const infoBar = document.getElementById('infoBar');
@@ -440,7 +482,7 @@ document.addEventListener("DOMContentLoaded", async () => {
                     let contentHTML = '';
 
                     contentHTML = await component();
-                    window.triggerHook('on-component-loaded');
+                    await window.triggerHook('on-component-loaded');
 
                     content.innerHTML = contentHTML;
 
@@ -448,11 +490,15 @@ document.addEventListener("DOMContentLoaded", async () => {
                 } catch (error) {
                     console.error(error);
                     content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
+                    unmountActions();
                 }
             }
         }
+        await window.triggerHook('on-content-loaded');
 
-        window.triggerHook('on-content-loaded');
+        setupActions();
+
+        await window.triggerHook('on-actions-setup');
 
         initializeCookiesAndStoragePopupButtons();
 

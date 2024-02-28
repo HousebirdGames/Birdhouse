@@ -1,11 +1,17 @@
-import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup } from "../../Birdhouse/src/main.js";
+import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup, event } from "../../Birdhouse/src/main.js";
 
 export default async function Example(exampleData) {
     updateTitleAndMeta('Example Page', 'This is an example page.');
 
-    setTimeout(() => {
-        setupEventHandlers();
-    }, 0); // Set up event handlers like this, so that the page is fully loaded and you can access all elements
+    event(exampleFunction) // This is an example of how to use the event system to call a function when the html of all components and subcomponents is loaded
+
+    event({
+        type: 'click',
+        handler: (event) => {
+            alertPopup('Button cliked: ', event.target.id);
+        },
+        selector: '#exampleButton'
+    }); // This is an example of how to use the event system to add an delegate event listener to a button using a selector
 
     if (exampleData) {
         updateOrAddQueryParameter('example', exampleData);
@@ -20,14 +26,6 @@ export default async function Example(exampleData) {
     `;
 }
 
-function setupEventHandlers() {
-    // Add event handlers here
-    const button = document.getElementById('exampleButton');
-    if (button) {
-        button.addEventListener('click', () => {
-            alertPopup('Button cliked');
-        });
-    }
-
-    console.log('Event handlers set up');
+function exampleFunction() {
+    console.log('I am called after the component html is loaded');
 }

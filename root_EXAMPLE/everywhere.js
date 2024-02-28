@@ -29,6 +29,10 @@ window.hook('on-content-loaded', async function () {
     // This hook will get triggered, when the content is displayed (i.e. of a component).
 });
 
+window.hook('on-actions-setup', async function () {
+    // This hook will get triggered, when the actions are invoked and set up.
+});
+
 window.hook('get-popup-menu-html', async function (menuHTML) {
     return `
     <div id="menu" class="popup">
