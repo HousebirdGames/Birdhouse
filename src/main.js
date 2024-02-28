@@ -39,7 +39,7 @@ function setupActions() {
         if (typeof action === 'function') {
             action();
         } else {
-            document.addEventListener(action.type, action.handler);
+            document.addEventListener(action.type, action.handler, action.passive ? { passive: true } : { passive: false });
         }
     }
 }
