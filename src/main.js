@@ -34,7 +34,7 @@ export function action(action) {
     }
 }
 
-function setupActions() {
+export function setupActions() {
     for (const action of actions) {
         if (typeof action === 'function') {
             action();
@@ -44,7 +44,7 @@ function setupActions() {
     }
 }
 
-function unmountActions() {
+export function unmountActions() {
     for (const action of actions) {
         if (typeof action !== 'function') {
             document.removeEventListener(action.type, action.handler);
@@ -495,6 +495,8 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
         await window.triggerHook('on-content-loaded');
+
+        await window.triggerHook('before-actions-setup');
 
         setupActions();
 

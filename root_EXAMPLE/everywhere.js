@@ -29,6 +29,11 @@ window.hook('on-content-loaded', async function () {
     // This hook will get triggered, when the content is displayed (i.e. of a component).
 });
 
+window.hook('before-actions-setup', async function () {
+    // This hook will get triggered, before the actions are invoked and set up.
+    // You can use this hook to remove actions or add new ones globally.
+});
+
 window.hook('on-actions-setup', async function () {
     // This hook will get triggered, when the actions are invoked and set up.
 });
