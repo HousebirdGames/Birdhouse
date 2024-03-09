@@ -348,6 +348,198 @@ async function updateMaintenanceMode() {
     isMaintenanceMode = await window.triggerHook('get-maintenance-mode') || isMaintenanceMode;
 }
 
+const content = document.getElementById("content");
+
+let isHandlingRouteChange = false;
+
+let path = normalizePath(window.location.pathname);
+
+export async function handleRouteChange() {
+    if (isHandlingRouteChange) {
+        return;
+    }
+
+    isHandlingRouteChange = true;
+
+    unmountActions();
+
+    await window.triggerHook('on-handle-route-change');
+
+
+    if (config.enableInfoBar) {
+        const infoBar = document.getElementById('infoBar');
+        let infoText = '<p>Infos could not be retrieved: Please contact us</p>';
+        getSetting('info_text', false).then(info_text => {
+            if (info_text != '') {
+                infoText = `<p>${info_text}</p>`;
+            }
+            else {
+                infoText = '';
+            }
+
+            updateInfoBar();
+        }).catch(error => {
+            console.error(error);
+            updateInfoBar();
+        });
+
+        function updateInfoBar() {
+            if (infoBar) {
+                infoBar.innerHTML = infoText;
+            }
+            else {
+                alert(infoText);
+            }
+        }
+    }
+
+    content.classList.remove('fade-in-fast');
+
+    content.innerHTML = await window.triggerHook('get-loading-content');
+
+    path = normalizePath(window.location.pathname);
+
+    let component = null;
+    let dynamicRoute = false;
+
+    await updateMaintenanceMode();
+
+    let allowedPathsDuringMaintenance = await window.triggerHook('get-allowed-paths-during-maintenance') || [];
+
+    if (isMaintenanceMode && !allowedPathsDuringMaintenance.includes(path.replace(urlPrefix + '/', ''))) {
+        component = await getComponent('components/maintenance.js');
+
+        if (component == null) {
+            component = function MaintenanceMode() {
+                return '<h1>This website is currently under maintenance. Please come back later.</h1>';
+            };
+        }
+    }
+    else {
+        let route = findRoute(path);
+
+        if (!route) {
+            dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
+
+            if (!route) {
+                route = findRoute(path);
+            }
+        }
+
+        if (!route && !dynamicRoute) {
+            route = findRoute('*');  // Fallback to 404 route
+        }
+
+        component = route ? route.Handler : null;
+    }
+
+    if (getCookie("storageAcknowledgement") != 'true' && !getSessionStorageItem('denyStorage') && config.openCookiePopupAtPageLoad) {
+        popupManager.openPopup("storageAcknowledgementPopup");
+    }
+
+    if (!component) {
+        if (redirect404ToHome) {
+            window.location.replace(`${urlPrefix}/`);
+        } else if (content) {
+            content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
+        }
+    } else {
+        if (content) {
+            try {
+                let contentHTML = '';
+
+                contentHTML = await component();
+                await window.triggerHook('on-component-loaded');
+
+                content.innerHTML = contentHTML;
+
+                scroll();
+            } catch (error) {
+                console.error(error);
+                content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
+                unmountActions();
+            }
+        }
+    }
+    await window.triggerHook('on-content-loaded');
+
+    await window.triggerHook('before-actions-setup');
+
+    setupActions();
+
+    await window.triggerHook('on-actions-setup');
+
+    initializeCookiesAndStoragePopupButtons();
+
+    addLinkListeners();
+
+    const initialLoadingSymbol = document.getElementById('initialLoadingSymbol');
+    if (initialLoadingSymbol) {
+        initialLoadingSymbol.remove();
+    }
+    content.classList.add('fade-in-fast');
+
+    isHandlingRouteChange = false;
+
+    if (dynamicRoute) {
+        await addAdditionalComponent('./components/blog.js', 3);
+    }
+
+    let message = getQueryParameterByName('message');
+    let messageTitle = ""
+    switch (message) {
+        case "failedCookies":
+            messageTitle = "Permission needed";
+            message = "<strong>Note:</strong> The login requires cookies and storage to be allowed.";
+            break;
+        case "nouser":
+            messageTitle = "No User";
+            message = "No user found with this username";
+            break;
+        case "success":
+            messageTitle = "Success";
+            message = "Logged in successfully";
+            break;
+        case "rememberme":
+            messageTitle = "Success";
+            message = "Logged in successfully with remember me";
+            break;
+        case "logout":
+            messageTitle = "Goodbye!";
+            message = "Logged out";
+            break;
+        case "logoutall":
+            messageTitle = "Goodbye!";
+            message = "Logged out & invalidated all auth tokens";
+            break;
+        case "failed":
+            messageTitle = "Oups!";
+            message = "Invalid username, password, or role";
+            break;
+        case "error":
+            messageTitle = "Error";
+            message = "There was an error while trying to log in";
+            break;
+        default:
+            messageTitle = "Notice";
+            message = message ? message : '';
+            break;
+    }
+    if (message != "") {
+        removeQueryParameter('message');
+        alertPopup(messageTitle, `<p>${message}</p>`);
+    }
+
+    if (config.enableImageComparisonSliders) {
+        try {
+            const module = await import(urlPrefix + '/Birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
+            module.initImageComparisons();
+        } catch (err) {
+            console.error('Failed to load module', err);
+        }
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     routesArray.push({
         path: '*',
@@ -377,254 +569,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     await window.triggerHook('create-routes');
 
     await addAdminButtons();
-    const content = document.getElementById("content");
-
-    let isHandlingRouteChange = false;
-
-    let path = normalizePath(window.location.pathname);
 
     updateTitleAndMeta();
     handleRouteChange();
     textareaResizer();
 
-    async function handleRouteChange() {
-        if (isHandlingRouteChange) {
-            return;
-        }
-
-        isHandlingRouteChange = true;
-
-        unmountActions();
-
-        await window.triggerHook('on-handle-route-change');
-
-
-        if (config.enableInfoBar) {
-            const infoBar = document.getElementById('infoBar');
-            let infoText = '<p>Infos could not be retrieved: Please contact us</p>';
-            getSetting('info_text', false).then(info_text => {
-                if (info_text != '') {
-                    infoText = `<p>${info_text}</p>`;
-                }
-                else {
-                    infoText = '';
-                }
-
-                updateInfoBar();
-            }).catch(error => {
-                console.error(error);
-                updateInfoBar();
-            });
-
-            function updateInfoBar() {
-                if (infoBar) {
-                    infoBar.innerHTML = infoText;
-                }
-                else {
-                    alert(infoText);
-                }
-            }
-        }
-
-        content.classList.remove('fade-in-fast');
-
-        content.innerHTML = await window.triggerHook('get-loading-content');
-
-        path = normalizePath(window.location.pathname);
-
-        let component = null;
-        let dynamicRoute = false;
-
-        await updateMaintenanceMode();
-
-        let allowedPathsDuringMaintenance = await window.triggerHook('get-allowed-paths-during-maintenance') || [];
-
-        if (isMaintenanceMode && !allowedPathsDuringMaintenance.includes(path.replace(urlPrefix + '/', ''))) {
-            component = await getComponent('components/maintenance.js');
-
-            if (component == null) {
-                component = function MaintenanceMode() {
-                    return '<h1>This website is currently under maintenance. Please come back later.</h1>';
-                };
-            }
-        }
-        else {
-            let route = findRoute(path);
-
-            if (!route) {
-                dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
-
-                if (!route) {
-                    route = findRoute(path);
-                }
-            }
-
-            if (!route && !dynamicRoute) {
-                route = findRoute('*');  // Fallback to 404 route
-            }
-
-            component = route ? route.Handler : null;
-        }
-
-        if (getCookie("storageAcknowledgement") != 'true' && !getSessionStorageItem('denyStorage') && config.openCookiePopupAtPageLoad) {
-            popupManager.openPopup("storageAcknowledgementPopup");
-        }
-
-        if (!component) {
-            if (redirect404ToHome) {
-                window.location.replace(`${urlPrefix}/`);
-            } else if (content) {
-                content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
-            }
-        } else {
-            if (content) {
-                try {
-                    let contentHTML = '';
-
-                    contentHTML = await component();
-                    await window.triggerHook('on-component-loaded');
-
-                    content.innerHTML = contentHTML;
-
-                    scroll();
-                } catch (error) {
-                    console.error(error);
-                    content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
-                    unmountActions();
-                }
-            }
-        }
-        await window.triggerHook('on-content-loaded');
-
-        await window.triggerHook('before-actions-setup');
-
-        setupActions();
-
-        await window.triggerHook('on-actions-setup');
-
-        initializeCookiesAndStoragePopupButtons();
-
-        addLinkListeners();
-
-        const initialLoadingSymbol = document.getElementById('initialLoadingSymbol');
-        if (initialLoadingSymbol) {
-            initialLoadingSymbol.remove();
-        }
-        content.classList.add('fade-in-fast');
-
-        isHandlingRouteChange = false;
-
-        if (dynamicRoute) {
-            await addAdditionalComponent('./components/blog.js', 3);
-        }
-
-        let message = getQueryParameterByName('message');
-        let messageTitle = ""
-        switch (message) {
-            case "failedCookies":
-                messageTitle = "Permission needed";
-                message = "<strong>Note:</strong> The login requires cookies and storage to be allowed.";
-                break;
-            case "nouser":
-                messageTitle = "No User";
-                message = "No user found with this username";
-                break;
-            case "success":
-                messageTitle = "Success";
-                message = "Logged in successfully";
-                break;
-            case "rememberme":
-                messageTitle = "Success";
-                message = "Logged in successfully with remember me";
-                break;
-            case "logout":
-                messageTitle = "Goodbye!";
-                message = "Logged out";
-                break;
-            case "logoutall":
-                messageTitle = "Goodbye!";
-                message = "Logged out & invalidated all auth tokens";
-                break;
-            case "failed":
-                messageTitle = "Oups!";
-                message = "Invalid username, password, or role";
-                break;
-            case "error":
-                messageTitle = "Error";
-                message = "There was an error while trying to log in";
-                break;
-            default:
-                messageTitle = "Notice";
-                message = message ? message : '';
-                break;
-        }
-        if (message != "") {
-            removeQueryParameter('message');
-            alertPopup(messageTitle, `<p>${message}</p>`);
-        }
-
-        if (config.enableImageComparisonSliders) {
-            try {
-                const module = await import(urlPrefix + '/Birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
-                module.initImageComparisons();
-            } catch (err) {
-                console.error('Failed to load module', err);
-            }
-        }
-    }
-
     window.addEventListener('popstate', () => handleRouteChange());
-
-    let linkClickListener;
-    function addLinkListeners() {
-        if (linkClickListener) {
-            document.body.removeEventListener('click', linkClickListener);
-        }
-
-        linkClickListener = async function (event) {
-            if (!event.target || !event.target.tagName) {
-                return;
-            }
-
-            let linkElement;
-
-            if (event.target.tagName === 'A') {
-                linkElement = event.target;
-            }
-            else if (event.target.parentElement && event.target.parentElement.tagName === 'A') {
-                linkElement = event.target.parentElement;
-            }
-
-            if (linkElement) {
-                let href = linkElement.getAttribute('href');
-
-                const url = new URL(href, window.location.href);
-                href = url.origin + url.pathname;
-                Analytics("Click: " + href);
-
-                let excludedRoutes = await window.triggerHook('get-spa-excluded-links') || [];
-
-                excludedRoutes = excludedRoutes.map(route => { return route.toLowerCase() });
-
-                if (excludedRoutes.includes(getRelativePath(href))) {
-                    return;
-                }
-
-                if (linkElement.hostname !== window.location.hostname) {
-                    return;
-                }
-
-                event.preventDefault();
-                if (!href.startsWith('#')) {
-                    const normalizedHref = normalizePath(linkElement.href);
-                    history.pushState(null, '', normalizedHref);
-                    handleRouteChange();
-                }
-            }
-        };
-
-        document.body.addEventListener('click', linkClickListener);
-    }
 
     document.addEventListener('change', (event) => {
         const checkbox = event.target;
@@ -712,17 +662,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             deleteSpecificCookies(cookiesToDelete);
             location.reload();
         });
-    }
-
-    function initializeCookiesAndStoragePopupButtons() {
-        const openAcknowledgementButtons = document.querySelectorAll(".openAcknowledgementButton");
-        if (openAcknowledgementButtons) {
-            openAcknowledgementButtons.forEach(openAcknowledgementButton => {
-                openAcknowledgementButton.addEventListener("click", () => {
-                    popupManager.openPopup("storageAcknowledgementPopup");
-                });
-            });
-        }
     }
 
     const storageAcknowledgementButton = document.getElementById("storageAcknowledgementButton");
@@ -863,6 +802,61 @@ function failedToLoadComponent() {
     `;
 }
 
+let linkClickListener;
+function addLinkListeners() {
+    if (linkClickListener) {
+        document.body.removeEventListener('click', linkClickListener);
+    }
+
+    linkClickListener = async function (event) {
+        if (!event.target || !event.target.tagName) {
+            return;
+        }
+
+        let linkElement;
+
+        if (event.target.tagName === 'A') {
+            linkElement = event.target;
+        }
+        else if (event.target.parentElement && event.target.parentElement.tagName === 'A') {
+            linkElement = event.target.parentElement;
+        }
+
+        if (linkElement) {
+            let href = linkElement.getAttribute('href');
+
+            const url = new URL(href, window.location.href);
+            href = url.origin + url.pathname;
+            Analytics("Click: " + href);
+
+            let excludedRoutes = await window.triggerHook('get-spa-excluded-links') || [];
+
+            excludedRoutes = excludedRoutes.map(route => { return route.toLowerCase() });
+
+            if (excludedRoutes.includes(getRelativePath(href))) {
+                return;
+            }
+
+            if (linkElement.hostname !== window.location.hostname) {
+                return;
+            }
+
+            event.preventDefault();
+            goToRoute(href);
+        }
+    };
+
+    document.body.addEventListener('click', linkClickListener);
+}
+
+export function goToRoute(href) {
+    if (!href.startsWith('#')) {
+        const normalizedHref = normalizePath(href);
+        history.pushState(null, '', normalizedHref);
+        handleRouteChange();
+    }
+}
+
 function assignInstallButton() {
     let deferredPrompt;
 
@@ -892,6 +886,17 @@ function assignInstallButton() {
             console.log("App installed");
             installButton.style.display = 'none';
             deferredPrompt = null;
+        });
+    }
+}
+
+function initializeCookiesAndStoragePopupButtons() {
+    const openAcknowledgementButtons = document.querySelectorAll(".openAcknowledgementButton");
+    if (openAcknowledgementButtons) {
+        openAcknowledgementButtons.forEach(openAcknowledgementButton => {
+            openAcknowledgementButton.addEventListener("click", () => {
+                popupManager.openPopup("storageAcknowledgementPopup");
+            });
         });
     }
 }
