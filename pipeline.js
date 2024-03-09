@@ -583,41 +583,66 @@ async function compressImages() {
         console.log(chalk.yellow('No compressed directory specified. Skipping image compression.'));
         return;
     }
+    console.log('');
+    console.log(chalk.gray(`Compressing images...`));
+    const compressedFiles = await compressImagesInDirectory(uncompressedDir, compressedDir);
+    console.log(chalk.green(`Compressed ${compressedFiles} images`));
 
-    if (!fs.existsSync(compressedDir)) {
-        fs.mkdirSync(compressedDir, { recursive: true });
-    }
+}
 
-    fs.readdir(uncompressedDir, (err, files) => {
-        if (err) {
-            console.error(`Error reading directory: ${err}`);
-            return;
-        }
+function isImageFile(filename) {
+    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    return imageExtensions.includes(path.extname(filename).toLowerCase());
+}
 
-        if (files.length > 0) {
-            console.log('');
-            console.log(chalk.gray(`Compressing ${files.length} images...`));
-        }
+async function compressImagesInDirectory(sourceDir, targetDir) {
 
-        files.forEach(file => {
-            infoFlag && console.log(chalk.gray(`    Compressing: ${file}`));
-            const uncompressedPath = path.join(uncompressedDir, file);
-            const compressedPath = path.join(compressedDir, file);
+    await ensureDirectoryExists(sourceDir);
+    await ensureDirectoryExists(targetDir);
 
-            fs.access(compressedPath, fs.constants.F_OK, (err) => {
-                if (err) {
-                    sharp(uncompressedPath)
+    let compressedFiles = 0;
+    try {
+        const entries = await fsPromises.readdir(sourceDir, { withFileTypes: true });
+
+        for (const entry of entries) {
+            const sourcePath = path.join(sourceDir, entry.name);
+            const targetPath = path.join(targetDir, entry.name);
+
+            if (entry.isDirectory()) {
+                await fsPromises.mkdir(targetPath, { recursive: true });
+                compressedFiles += await compressImagesInDirectory(sourcePath, targetPath);
+            } else if (entry.isFile() && isImageFile(entry.name)) {
+                if (infoFlag) console.log(chalk.gray(`Compressing: ${entry.name}`));
+
+                try {
+                    await sharp(sourcePath)
                         .resize(800)
                         .jpeg({ quality: 100 })
-                        .toFile(compressedPath)
-                        .then(() => infoFlag && console.log(chalk.gray(`Compressed: ${file}`)))
-                        .catch(err => console.error(`Error compressing ${file}: ${err}`));
+                        .toFile(targetPath);
+                    compressedFiles++;
+                    if (infoFlag) console.log(chalk.gray(`Compressed: ${entry.name}`));
+                } catch (err) {
+                    console.error(`Error compressing ${entry.name}: ${err}`);
                 }
-            });
-        });
+            }
+        }
+    } catch (err) {
+        console.error(`Error reading directory: ${err}`);
+    }
+    return compressedFiles;
+}
 
-        if (files.length > 0) console.log(chalk.green(`Compressed ${files.length} images.`));
-    });
+async function ensureDirectoryExists(dir) {
+    try {
+        await fsPromises.access(dir);
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.log(chalk.gray(`Creating directory: ${dir}`));
+            await fsPromises.mkdir(dir, { recursive: true });
+        } else {
+            throw error;
+        }
+    }
 }
 
 async function getCurrentVersion() {
@@ -734,6 +759,8 @@ async function getFilesToCache() {
 }
 
 async function readFilesFromDirectory(directory, filesToCache) {
+    await ensureDirectoryExists(directory);
+
     infoFlag && console.log(chalk.gray(`Reading files from ${directory}...`));
     const filesInDirectory = await fsPromises.readdir(directory);
     for (const file of filesInDirectory) {
