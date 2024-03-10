@@ -540,6 +540,25 @@ export async function handleRouteChange() {
     }
 }
 
+function scroll() {
+    const hash = window.location.hash.substring(1);
+    if (hash != '') {
+        const element = document.getElementById(hash);
+        if (element) {
+            requestAnimationFrame(() => {
+                const newPosition = window.scrollY + element.getBoundingClientRect().top - anchorScrollOffset;
+                window.scrollTo({ top: newPosition, behavior: 'smooth' });
+            });
+        }
+        else {
+            window.scrollTo(0, 0);
+        }
+    }
+    else {
+        window.scrollTo(0, 0);
+    }
+}
+
 document.addEventListener("DOMContentLoaded", async () => {
     routesArray.push({
         path: '*',
@@ -588,25 +607,6 @@ document.addEventListener("DOMContentLoaded", async () => {
             }
         }
     });
-
-    function scroll() {
-        const hash = window.location.hash.substring(1);
-        if (hash != '') {
-            const element = document.getElementById(hash);
-            if (element) {
-                requestAnimationFrame(() => {
-                    const newPosition = window.scrollY + element.getBoundingClientRect().top - anchorScrollOffset;
-                    window.scrollTo({ top: newPosition, behavior: 'smooth' });
-                });
-            }
-            else {
-                window.scrollTo(0, 0);
-            }
-        }
-        else {
-            window.scrollTo(0, 0);
-        }
-    }
 
     const menuHTML = await getMenuHTML();
     await window.triggerHook('before-adding-base-content', menuHTML);
