@@ -824,16 +824,16 @@ function addLinkListeners() {
 
         if (linkElement) {
             let href = linkElement.getAttribute('href');
+            Analytics("Click: " + href);
 
             const url = new URL(href, window.location.href);
-            href = url.origin + url.pathname;
-            Analytics("Click: " + href);
+            const cleanHref = url.origin + url.pathname;
 
             let excludedRoutes = await window.triggerHook('get-spa-excluded-links') || [];
 
             excludedRoutes = excludedRoutes.map(route => { return route.toLowerCase() });
 
-            if (excludedRoutes.includes(getRelativePath(href))) {
+            if (excludedRoutes.includes(getRelativePath(cleanHref))) {
                 return;
             }
 
@@ -842,6 +842,7 @@ function addLinkListeners() {
             }
 
             event.preventDefault();
+            console.log('going to', href);
             goToRoute(href);
         }
     };
