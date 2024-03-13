@@ -842,7 +842,6 @@ function addLinkListeners() {
             }
 
             event.preventDefault();
-            console.log('going to', href);
             goToRoute(href);
         }
     };
