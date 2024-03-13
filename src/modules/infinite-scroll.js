@@ -119,7 +119,7 @@ export default function InfiniteScroll(config) {
         appendLoadingSymbol();
 
         await fetchItems(`${fetchURL}${separator}${searchParameter()}&limit=${limit}&page=${page}`)
-            .then(response => {
+            .then(async (response) => {
                 if (emptyContainer) {
                     console.log('Emptying container');
                     container.innerHTML = '';
@@ -130,7 +130,7 @@ export default function InfiniteScroll(config) {
                 } else {
                     const items = response.items;
                     if (items) {
-                        addMoreItems(items, fadeIn);
+                        await addMoreItems(items, fadeIn);
                     }
                     else {
                         displayNoItemsMessage();
