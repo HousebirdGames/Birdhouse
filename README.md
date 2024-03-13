@@ -20,6 +20,14 @@ Follow these steps to get the project up and running on your local machine:
     git clone https://github.com/HousebirdGames/Birdhouse.git
     ```
 
+    **OR**
+
+    If your project is already using Git, it's recommended to add **Birdhouse** as a submodule (this can also be done later). To do this, use the following command:
+
+    ```bash
+    git submodule add https://github.com/HousebirdGames/Birdhouse ./Birdhouse
+    ```
+
 2. Change your current directory to the one that was created when you cloned the repository:
 
     ```bash
