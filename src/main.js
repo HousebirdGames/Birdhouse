@@ -15,6 +15,8 @@ const redirect404ToHome = true;
 const anchorScrollOffset = 54;
 const excludedPaths = [].map(path => path.toLowerCase());
 
+export let dynamicRoute = false;
+
 const actions = [];
 
 export function action(action) {
@@ -57,9 +59,9 @@ export function unmountActions() {
 export let userData = null;
 let fetchingUserData = false;
 export let isMaintenanceMode = config.maintenanceModeWithFailedBackend != undefined ? config.maintenanceModeWithFailedBackend : true;
-const cookieIdentifier = `_${sanitizeIdentifier(config.cookieIdentifier)}`;
+export const cookieIdentifier = `_${sanitizeIdentifier(config.cookieIdentifier)}`;
 
-function sanitizeIdentifier(title) {
+export function sanitizeIdentifier(title) {
     return title.replace(/[\s,;=]/g, '_');
 }
 
@@ -192,7 +194,7 @@ async function generateMenuHTML(routeType) {
     return html;
 }
 
-export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null) {
+export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
     componentPath = urlPrefix + '/src/' + componentPath;
     const route = {
         path: (urlPrefix + slug).toLowerCase(),
@@ -201,6 +203,7 @@ export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu
         inMenu: inMenu,
         materialIcon: materialIcon,
         componentPath: componentPath,
+        dynamic: dynamic,
         displayFull: true,
         Handler: async function () {
             try {
@@ -223,7 +226,7 @@ export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu
     routesArray.push(route);
 }
 
-export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true) {
+export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
     componentPath = urlPrefix + '/src/' + componentPath;
     const route = {
         path: (urlPrefix + slug).toLowerCase(),
@@ -232,6 +235,7 @@ export function createUserRoute(slug, name, materialIcon, componentPath, inMenu 
         inMenu: inMenu,
         materialIcon: materialIcon,
         componentPath: componentPath,
+        dynamic: dynamic,
         displayFull: displayFull,
         Handler: async function () {
             try {
@@ -259,7 +263,7 @@ export function createUserRoute(slug, name, materialIcon, componentPath, inMenu 
     routesArray.push(route);
 }
 
-export function createPublicRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null) {
+export function createPublicRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
     componentPath = urlPrefix + '/src/' + componentPath;
     const route = {
         path: (urlPrefix + slug).toLowerCase(),
@@ -268,6 +272,7 @@ export function createPublicRoute(slug, name, materialIcon, componentPath, inMen
         inMenu: inMenu,
         materialIcon: materialIcon,
         componentPath: componentPath,
+        dynamic: dynamic,
         displayFull: true,
         Handler: async function () {
             try {
@@ -309,7 +314,7 @@ export function getRelativePath(relativePath) {
     return new URL(relativePath, window.location.origin + urlPrefix + '/').pathname;
 }
 
-async function addAdditionalComponent(componentPath, data = null) {
+export async function addAdditionalComponent(componentPath, data = null) {
     const content = document.getElementById("content");
     if (content) {
         const additionalComponent = await getComponent(componentPath, data).catch((error) => {
@@ -400,7 +405,6 @@ export async function handleRouteChange() {
     path = normalizePath(window.location.pathname);
 
     let component = null;
-    let dynamicRoute = false;
 
     await updateMaintenanceMode();
 
@@ -424,6 +428,9 @@ export async function handleRouteChange() {
             if (!route) {
                 route = findRoute(path);
             }
+        }
+        else {
+            dynamicRoute = route.dynamic;
         }
 
         if (!route && !dynamicRoute) {
@@ -461,6 +468,7 @@ export async function handleRouteChange() {
             }
         }
     }
+
     await window.triggerHook('on-content-loaded');
 
     await window.triggerHook('before-actions-setup');
@@ -480,10 +488,6 @@ export async function handleRouteChange() {
     content.classList.add('fade-in-fast');
 
     isHandlingRouteChange = false;
-
-    if (dynamicRoute) {
-        await addAdditionalComponent('./components/blog.js', 3);
-    }
 
     let message = getQueryParameterByName('message');
     let messageTitle = ""

@@ -9,9 +9,72 @@ export default function InfiniteScroll(config) {
     let displayFunction = config.displayFunction;
     let searchParameter = config.searchParameter || (() => '');
     let emptyMessage = config.emptyMessage || 'Currently empty';
+    let storageType = config.storageType;
     let isCooldown = false;
     let pendingArgs = null;
     let isSetup = false;
+
+    async function fetchItems(url) {
+        if (storageType) {
+            let storage = storageType === 'local' ? localStorage : sessionStorage;
+            let bundleKey = `InfiniteScroll-Cache-${container.id}`;
+            let cacheBundle = JSON.parse(storage.getItem(bundleKey)) || {};
+            let cacheKey = url;
+
+            if (cacheBundle[cacheKey]) {
+                return Promise.resolve(cacheBundle[cacheKey]);
+            } else {
+                return fetch(url)
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('Network response was not ok');
+                        }
+                        return response.text().then(text => {
+                            try {
+                                let json = JSON.parse(text);
+                                cacheBundle[cacheKey] = json;
+                                storage.setItem(bundleKey, JSON.stringify(cacheBundle));
+                                return json;
+                            } catch (error) {
+                                console.error('Failed to parse response as JSON:', error);
+                                return false;
+                            }
+                        });
+                    })
+                    .catch(error => {
+                        console.error('There has been a problem with the fetch operation:', error);
+                        return false;
+                    });
+            }
+        } else {
+            return fetchAndProcess(url);
+        }
+    }
+
+    function fetchAndProcess(url) {
+        return fetch(url)
+            .then(handleResponse)
+            .catch(handleError);
+    }
+
+    function handleResponse(response) {
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return response.text().then(text => {
+            try {
+                return JSON.parse(text);
+            } catch (error) {
+                console.error('Failed to parse response as JSON:', error);
+                return false;
+            }
+        });
+    }
+
+    function handleError(error) {
+        console.error('There has been a problem with the fetch operation:', error);
+        return false;
+    }
 
     async function addMoreItems(items, fadeIn = true) {
         if (!container) {
@@ -200,25 +263,4 @@ function debounce(func, wait) {
         clearTimeout(timeout);
         timeout = setTimeout(() => func.apply(this, args), wait);
     };
-}
-
-async function fetchItems(url) {
-    return await fetch(url)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Network response was not ok');
-            }
-            return response.text().then(text => {
-                try {
-                    return JSON.parse(text);
-                } catch (error) {
-                    console.error('Failed to parse response as JSON:', error);
-                    return false;
-                }
-            });
-        })
-        .catch(error => {
-            console.error('There has been a problem with your fetch operation:', error);
-            return false;
-        });
 }
