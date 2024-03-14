@@ -125,6 +125,7 @@ export default function InfiniteScroll(config) {
                 loadingSymbol.classList.remove('smoothHide');
             }
 
+            removeLoadingSymbol();
             appendLoadingSymbol();
 
             const newLimit = limit + add;
@@ -159,8 +160,6 @@ export default function InfiniteScroll(config) {
                     }
                 }
             });
-
-            removeLoadingSymbol();
         }
     }
 
@@ -216,11 +215,13 @@ export default function InfiniteScroll(config) {
     }
 
     function appendLoadingSymbol() {
+        console.log('Appending loading symbol');
         const loadingHtml = '<div class="loadingSymbolWrap"><div class="loadingSymbol"></div></div>';
         container.insertAdjacentHTML('beforeend', loadingHtml);
     }
 
     function removeLoadingSymbol() {
+        console.log('Removing loading symbol');
         const loadingElement = container.querySelector('.loadingSymbolWrap');
         if (loadingElement) {
             loadingElement.remove();
