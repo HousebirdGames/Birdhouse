@@ -1140,7 +1140,7 @@ export function removeQueryParameter(name, url = window.location.href) {
 function loadCSS(url) {
     var link = document.createElement('link');
     link.rel = 'stylesheet';
-    link.href = getRelativePath(url) + '';
+    link.href = getRelativePath(url) + '?v=' + config.version;
 
     document.head.appendChild(link);
 }

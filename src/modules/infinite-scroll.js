@@ -215,13 +215,11 @@ export default function InfiniteScroll(config) {
     }
 
     function appendLoadingSymbol() {
-        console.log('Appending loading symbol');
         const loadingHtml = '<div class="loadingSymbolWrap"><div class="loadingSymbol"></div></div>';
         container.insertAdjacentHTML('beforeend', loadingHtml);
     }
 
     function removeLoadingSymbol() {
-        console.log('Removing loading symbol');
         const loadingElement = container.querySelector('.loadingSymbolWrap');
         if (loadingElement) {
             loadingElement.remove();
