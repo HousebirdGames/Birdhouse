@@ -92,8 +92,9 @@ export default function InfiniteScroll(config) {
                 container.appendChild(tempDiv.firstChild);
             }
         }
-
-        displayNoItemsMessage();
+        else if (container.innerHTML.trim() === '') {
+            displayNoItemsMessage();
+        }
     }
 
     function displayNoItemsMessage() {
@@ -115,24 +116,30 @@ export default function InfiniteScroll(config) {
         }
     }
 
-    function handleScroll() {
+    let isLoading = false;
+    let lastPageLoaded = 0;
+    async function handleScroll() {
+        if (isLoading) return;
+
         const rect = container.getBoundingClientRect();
         const isAtBottom = (rect.bottom <= window.innerHeight + 2000);
 
-        if (isAtBottom) {
+        if (isAtBottom && !isLoading && page > lastPageLoaded) {
+            isLoading = true;
+            lastPageLoaded = page;
+
             const loadingSymbol = document.getElementById('logoLoadingSymbol');
-            if (loadingSymbol && loadingSymbol.classList.contains('smoothHide')) {
+            if (!loadingSymbol) {
+                appendLoadingSymbol();
+            } else if (loadingSymbol.classList.contains('smoothHide')) {
                 loadingSymbol.classList.remove('smoothHide');
             }
 
-            removeLoadingSymbol();
-            appendLoadingSymbol();
-
             const newLimit = limit + add;
             const newPage = page + 1;
-
             const separator = fetchURL.includes('?') ? '&' : '?';
-            fetchItems(`${fetchURL}${separator}${searchParameter()}&limit=${newLimit}&page=${newPage}`).then(response => {
+
+            await fetchItems(`${fetchURL}${separator}${searchParameter()}&limit=${newLimit}&page=${newPage}`).then(async (response) => {
                 setTimeout(() => {
                     if (loadingSymbol) {
                         loadingSymbol.classList.add('smoothHide');
@@ -144,21 +151,23 @@ export default function InfiniteScroll(config) {
                     teardown();
                 } else {
                     const items = response.items;
-
                     if (items) {
                         if (items.length < newLimit) {
-                            displayNoItemsMessage();
+                            await addMoreItems(items);
                             teardown();
                         } else {
                             limit = newLimit;
                             page = newPage;
                             addMoreItems(items);
                         }
-                    }
-                    else {
+                    } else {
                         teardown();
                     }
                 }
+                isLoading = false;
+                removeLoadingSymbol();
+            }).catch(() => {
+                isLoading = false;
             });
         }
     }
@@ -198,6 +207,7 @@ export default function InfiniteScroll(config) {
                         displayNoItemsMessage();
                     }
                 }
+                removeLoadingSymbol();
             });
 
         isSetup = true;
@@ -215,8 +225,10 @@ export default function InfiniteScroll(config) {
     }
 
     function appendLoadingSymbol() {
-        const loadingHtml = '<div class="loadingSymbolWrap"><div class="loadingSymbol"></div></div>';
-        container.insertAdjacentHTML('beforeend', loadingHtml);
+        if (!document.getElementById('logoLoadingSymbol')) {
+            const loadingHtml = '<div id="logoLoadingSymbol" class="loadingSymbolWrap"><div class="loadingSymbol"></div></div>';
+            container.insertAdjacentHTML('beforeend', loadingHtml);
+        }
     }
 
     function removeLoadingSymbol() {
