@@ -1,17 +1,17 @@
-import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup, event } from "../../Birdhouse/src/main.js";
+import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup, action } from "../../Birdhouse/src/main.js";
 
 export default async function Example(exampleData) {
     updateTitleAndMeta('Example Page', 'This is an example page.');
 
-    event(exampleFunction) // This is an example of how to use the event system to call a function when the html of all components and subcomponents is loaded
+    action(exampleFunction) // This is an example of how to use the action system to call a function when the html of all components and subcomponents is loaded
 
-    event({
+    action({
         type: 'click',
         handler: (event) => {
             alertPopup('Button cliked: ', event.target.id);
         },
         selector: '#exampleButton'
-    }); // This is an example of how to use the event system to add an delegate event listener to a button using a selector
+    }); // This is an example of how to use the action system to add an delegate event listener to a button using a selector
 
     if (exampleData) {
         updateOrAddQueryParameter('example', exampleData);
