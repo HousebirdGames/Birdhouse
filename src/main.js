@@ -964,7 +964,6 @@ export function textareaResizer() {
     }
 
     function resizeOne() {
-        console.log('scroll');
         const currentPosition = window.scrollY;
         const currentHeight = this.style.height;
         this.style.height = 'auto';
