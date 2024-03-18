@@ -63,7 +63,12 @@ export async function markdown(input) {
         `;
     });
     html = html.replace(buttonPattern, "<a href=\"$1\" class=\"button\">$2</a>");
-    html = html.replace(buttonWrapPattern, async (match, content) => `<div class="blogButtonWrap">${await markdown(content)}</div > `);
+    const buttonWrapMatches = Array.from(html.matchAll(buttonWrapPattern));
+    const buttonWrapPromises = buttonWrapMatches.map(match => markdown(match[1]));
+    const buttonWrapResults = await Promise.all(buttonWrapPromises);
+    buttonWrapMatches.forEach((match, index) => {
+        html = html.replace(match[0], `<div class="blogButtonWrap">${buttonWrapResults[index]}</div>`);
+    });
 
     return html;
 }
