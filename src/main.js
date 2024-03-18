@@ -479,6 +479,8 @@ export async function handleRouteChange() {
 
     initializeCookiesAndStoragePopupButtons();
 
+    initializeUpdateNotesButtons();
+
     addLinkListeners();
 
     const initialLoadingSymbol = document.getElementById('initialLoadingSymbol');
@@ -701,72 +703,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         popupManager.openPopup("storageAcknowledgementPopup");
     }
 
-    const updateNotesButtons = document.querySelectorAll(".updateNotesButton");
-    updateNotesButtons.forEach(updateNotesButton => {
-        updateNotesButton.addEventListener('click', () => {
-            Analytics('Viewed update notes');
-            showUpdateNotes(true);
-        });
-    });
-
-    function showUpdateNotes(force = false) {
-        const latestPatch = updateNotes[0];
-
-        if ((getCookie("lastUpdateNote") !== latestPatch.version && config.showNewUpdateNotes) || force) {
-            Analytics('Showed updated notes');
-            const updatePopup = document.getElementById("updatePopup");
-            const updateContent = document.getElementById("updateContent");
-            const updateNotesButtonsContainer = document.getElementById("updateNotesButtonsContainer");
-
-            if (updatePopup && updateContent && updateNotesButtonsContainer) {
-                updateContent.innerHTML = `
-                  ${latestPatch.title ? `<h4 class="leftText">New: Version ${latestPatch.version}</h4><h2>${latestPatch.title}</h2>` : `<h4 class="leftText"></h4><h2>New Version ${latestPatch.version}</h2>`}
-                  <ul id="updateNotesList">
-                    ${latestPatch.notes.map((note) => `<li>${note}</li>`).join('')}
-                  </ul>
-                `;
-
-                updateNotesButtonsContainer.innerHTML = '';
-                updateNotes.forEach((patch, index) => {
-                    const button = document.createElement("button");
-                    button.classList.add('updateVersionButton');
-                    button.textContent = `${patch.version}`;
-
-                    if (patch.version === latestPatch.version) {
-                        button.classList.add('active');
-                    }
-
-                    button.addEventListener("click", () => {
-                        updateContent.querySelector("h2").textContent = `${patch.title ? `${patch.title}` : `Version ${patch.version}`}`;
-                        updateContent.querySelector("h4").textContent = `${patch.title ? `Version ${patch.version}` : ``}`;
-                        document.getElementById("updateNotesList").innerHTML = patch.notes
-                            .map((note) => `<li>${note}</li>`)
-                            .join("");
-
-                        updateNotesButtonsContainer.querySelectorAll('.updateVersionButton').forEach(btn => {
-                            btn.classList.remove('active');
-                        });
-
-                        button.classList.add('active');
-                    });
-                    updateNotesButtonsContainer.appendChild(button);
-                });
-
-                popupManager.openPopup("updatePopup");
-                const updateConfirm = document.getElementById("updateConfirm");
-                if (updateConfirm) {
-                    updateConfirm.addEventListener("click", (event) => {
-                        if (getCookie("storageAcknowledgement") === "true") {
-                            Analytics('Confirmed updated notes');
-                            setCookie("lastUpdateNote", latestPatch.version, 365);
-                        }
-                        popupManager.closePopup("updatePopup");
-                    });
-                }
-            }
-        }
-    }
-
     if (getCookie("storageAcknowledgement") == 'true') {
         showUpdateNotes();
     }
@@ -894,6 +830,74 @@ function assignInstallButton() {
     }
 }
 
+function showUpdateNotes(force = false) {
+    const latestPatch = updateNotes[0];
+
+    if ((getCookie("lastUpdateNote") !== latestPatch.version && config.showNewUpdateNotes) || force) {
+        Analytics('Showed updated notes');
+        const updatePopup = document.getElementById("updatePopup");
+        const updateContent = document.getElementById("updateContent");
+        const updateNotesButtonsContainer = document.getElementById("updateNotesButtonsContainer");
+
+        if (updatePopup && updateContent && updateNotesButtonsContainer) {
+            updateContent.innerHTML = `
+              ${latestPatch.title ? `<h4 class="leftText">New: Version ${latestPatch.version}</h4><h2>${latestPatch.title}</h2>` : `<h4 class="leftText"></h4><h2>New Version ${latestPatch.version}</h2>`}
+              <ul id="updateNotesList">
+                ${latestPatch.notes.map((note) => `<li>${note}</li>`).join('')}
+              </ul>
+            `;
+
+            updateNotesButtonsContainer.innerHTML = '';
+            updateNotes.forEach((patch, index) => {
+                const button = document.createElement("button");
+                button.classList.add('updateVersionButton');
+                button.textContent = `${patch.version}`;
+
+                if (patch.version === latestPatch.version) {
+                    button.classList.add('active');
+                }
+
+                button.addEventListener("click", () => {
+                    updateContent.querySelector("h2").textContent = `${patch.title ? `${patch.title}` : `Version ${patch.version}`}`;
+                    updateContent.querySelector("h4").textContent = `${patch.title ? `Version ${patch.version}` : ``}`;
+                    document.getElementById("updateNotesList").innerHTML = patch.notes
+                        .map((note) => `<li>${note}</li>`)
+                        .join("");
+
+                    updateNotesButtonsContainer.querySelectorAll('.updateVersionButton').forEach(btn => {
+                        btn.classList.remove('active');
+                    });
+
+                    button.classList.add('active');
+                });
+                updateNotesButtonsContainer.appendChild(button);
+            });
+
+            popupManager.openPopup("updatePopup");
+            const updateConfirm = document.getElementById("updateConfirm");
+            if (updateConfirm) {
+                updateConfirm.addEventListener("click", (event) => {
+                    if (getCookie("storageAcknowledgement") === "true") {
+                        Analytics('Confirmed updated notes');
+                        setCookie("lastUpdateNote", latestPatch.version, 365);
+                    }
+                    popupManager.closePopup("updatePopup");
+                });
+            }
+        }
+    }
+}
+
+function initializeUpdateNotesButtons() {
+    const updateNotesButtons = document.querySelectorAll(".updateNotesButton");
+    updateNotesButtons.forEach(updateNotesButton => {
+        updateNotesButton.addEventListener('click', () => {
+            Analytics('Viewed update notes');
+            showUpdateNotes(true);
+        });
+    });
+}
+
 function initializeCookiesAndStoragePopupButtons() {
     const openAcknowledgementButtons = document.querySelectorAll(".openAcknowledgementButton");
     if (openAcknowledgementButtons) {
@@ -960,6 +964,8 @@ export function textareaResizer() {
     }
 
     function resizeOne() {
+        console.log('scroll');
+        const currentPosition = window.scrollY;
         const currentHeight = this.style.height;
         this.style.height = 'auto';
         const newHeight = this.scrollHeight + 4 + 'px';
@@ -970,6 +976,7 @@ export function textareaResizer() {
         requestAnimationFrame(() => {
             this.style.height = newHeight;
             this.scrollTop = 0;
+            window.scrollTo(0, currentPosition);
         });
     }
 
