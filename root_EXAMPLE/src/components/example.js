@@ -11,7 +11,25 @@ export default async function Example(exampleData) {
             alertPopup('Button cliked: ', event.target.id);
         },
         selector: '#exampleButton'
-    }); // This is an example of how to use the action system to add an delegate event listener to a button using a selector
+    }); // This is an example of how to use the action system to add an delegate event listener to the whole document using the ID of a button as the selector
+
+    action({
+        type: 'click',
+        handler: (event) => {
+            alertPopup('Clicked a button inside a div with class \'.exampleDiv\'');
+        },
+        selector: 'button',
+        container: '.exampleDiv'
+    }); // This is an example of how to use the action system to add an delegate event listener to a specific container using a class as the container selector (All buttons inside will trigger the handler)
+
+    action({
+        type: 'click',
+        handler: (event) => {
+            alert('Clicked a button inside a div with id \'#exampleDivWithId\'');
+        },
+        selector: 'button',
+        container: '#exampleDivWithId'
+    }); // This is an example of how to use the action system to add an delegate event listener to a specific container using an id as the container selector (All buttons inside will trigger the handler)
 
     if (exampleData) {
         updateOrAddQueryParameter('example', exampleData);
@@ -23,6 +41,14 @@ export default async function Example(exampleData) {
     <p>It is used to demonstrate how to create a custom component.</p>
     ${exampleData ? `<p>We have added a query parameter that should show here: example=${getQueryParameterByName('example')}</p>` : ''}
     <button id="exampleButton">Click me</button>
+    <div class="exampleDiv">
+        <button>I'm inside an exampleDiv</button>
+        <button>I'm inside an exampleDiv too</button>
+    </div>
+    <div class="exampleDiv" id="exampleDivWithId">
+        <button>I'm inside an exampleDiv with the the ID 'exampleDivWithId'</button>
+        <button>I'm inside an exampleDiv with the the ID 'exampleDivWithId' too</button>
+    </div>
     `;
 }
 

@@ -41,7 +41,16 @@ export function setupActions() {
         if (typeof action === 'function') {
             action();
         } else {
-            document.addEventListener(action.type, action.handler, action.passive ? { passive: true } : { passive: false });
+            let containers;
+            if (action.container) {
+                containers = Array.from(document.querySelectorAll(action.container));
+            } else {
+                containers = [document];
+            }
+
+            containers.forEach(container => {
+                container.addEventListener(action.type, action.handler, action.passive ? { passive: true } : { passive: false });
+            });
         }
     }
 }
@@ -49,7 +58,16 @@ export function setupActions() {
 export function unmountActions() {
     for (const action of actions) {
         if (typeof action !== 'function') {
-            document.removeEventListener(action.type, action.handler);
+            let containers;
+            if (action.container) {
+                containers = Array.from(document.querySelectorAll(action.container));
+            } else {
+                containers = [document];
+            }
+
+            containers.forEach(container => {
+                container.removeEventListener(action.type, action.handler);
+            });
         }
     }
 
