@@ -1,78 +1,9 @@
-export async function markdown(input) {
-    let html = input;
+/* The Birdhdouse markdown module provides a function to transform custom Birdhouse markdown input into HTML, applying pattern replacements and preprocessing. */
 
-    const boldPattern = /\[b\](.*?)\[\/b\]/g;
-    const italicPattern = /\[i\](.*?)\[\/i\]/g;
-    const underlinePattern = /\[u\](.*?)\[\/u\]/g;
-    const headerPattern = /\[(h[1-6])\](.*?)\[\/\1\]/g;
-    const imgPattern = /\[img src=\^(.*?)\^( alt=\^(.*?)\^)?( title=\^(.*?)\^)?( href=\^(.*?)\^)?\]/g;
-    const brPattern = /\[br\]/g;
-    const ulPattern = /\[ul\](.*?)\[\/ul\]/gs;
-    const liPattern = /\[li\](.*?)\[\/li\]/g;
-    const aPattern = /\[a href=\^(.*?)\^\](.*?)\[\/a\]/g;
-    const pPattern = /\[p\](.*?)\[\/p\]/gs;
-    const divPattern = /\[div class=\^(.*?)\^\](.*?)\[\/div\]/gs;
-    const comparePattern = /\[compare src1=\^(.*?)\^ src2=\^(.*?)\^\]/g;
-    const buttonPattern = /\[button href=\^(.*?)\^\](.*?)\[\/button\]/g;
-    const buttonWrapPattern = /\[buttonWrap\](.*?)\[\/buttonWrap\]/gs;
-
-    // Find all matches
-    const ulMatches = Array.from(html.matchAll(ulPattern));
-    const divMatches = Array.from(html.matchAll(divPattern));
-
-    // Process matches asynchronously
-    const ulPromises = ulMatches.map(match => markdown(match[1]));
-    const divPromises = divMatches.map(match => markdown(match[2]));
-
-    // Wait for all promises to resolve
-    const ulResults = await Promise.all(ulPromises);
-    const divResults = await Promise.all(divPromises);
-
-    // Replace original matches with processed content
-    ulMatches.forEach((match, index) => {
-        html = html.replace(match[0], `<ul>${ulResults[index]}</ul>`);
-    });
-    divMatches.forEach((match, index) => {
-        html = html.replace(match[0], `<div class="${match[1]}">${divResults[index]}</div>`);
-    });
-
-    html = await window.triggerHook('add-markdown-patterns', html);
-    html = html.replace(boldPattern, "<strong>$1</strong>");
-    html = html.replace(italicPattern, "<em>$1</em>");
-    html = html.replace(underlinePattern, "<u>$1</u>");
-    html = html.replace(headerPattern, "<$1>$2</$1>");
-    html = html.replace(imgPattern, function (match, src, _, alt, __, title, ___, href) {
-        alt = alt || src;
-        title = title || src;
-        if (href) {
-            return `<a href="${href}"><img src="uploads/${src}" alt="${alt}" title="${title}" /></a>`;
-        }
-        return `<img src="uploads/${src}" alt="${alt}" title="${title}" loading="lazy"/>`;
-    });
-    html = html.replace(brPattern, "<br />");
-    html = html.replace(liPattern, "<li><p>$1</p></li>");
-    html = html.replace(aPattern, "<a href=\"$1\" class=\"underline noShift\">$2</a>");
-    html = html.replace(pPattern, "<p>$1</p>");
-    html = html.replace(comparePattern, function (match, src1, src2) {
-        return `
-            <div class="image-spliter">
-            <div class="mover"></div>
-                <img class="img-left" src="uploads/${src1}" alt="${src1} loading="lazy"">
-                <img class="img-right" src="uploads/${src2}" alt="${src2} loading="lazy"">
-            </div>
-        `;
-    });
-    html = html.replace(buttonPattern, "<a href=\"$1\" class=\"button\">$2</a>");
-    const buttonWrapMatches = Array.from(html.matchAll(buttonWrapPattern));
-    const buttonWrapPromises = buttonWrapMatches.map(match => markdown(match[1]));
-    const buttonWrapResults = await Promise.all(buttonWrapPromises);
-    buttonWrapMatches.forEach((match, index) => {
-        html = html.replace(match[0], `<div class="blogButtonWrap">${buttonWrapResults[index]}</div>`);
-    });
-
-    return html;
-}
-
+/**
+ * Defines markdown elements with their Birdhouse markdown representations.
+ * Provides a mapping of common HTML elements to their Birdhouse markdown format for easy reference.
+ */
 export const markdownElements = {
     'Paragraph': '[p]Paragraph[/p]',
     'Heading 1': '[h1]Heading[/h1]',
@@ -90,7 +21,114 @@ export const markdownElements = {
     'Unordered List': '[ul][/ul]',
     'List Item': '[li]Item[/li]',
     'Link': '[a href=^link^]text[/a]',
-    'Div': '[div class=^^]Content[/div]',
+    'Div': '[div class=^^ id=^^]Content[/div]',
     'Button': '[button href=^link^]Button Text[/button]',
     'Button Wrapper': '[buttonWrap][/buttonWrap]'
 };
+
+/**
+ * Transforms custom Birdhouse markdown input into HTML, applying pattern replacements and preprocessing.
+ * @param {string} input Birdhouse markdown input to be transformed.
+ * @return {Promise<string>} The transformed HTML output.
+ */
+export async function markdown(input) {
+    let html = input;
+
+    html = applyPatternReplacements(preprocessInput(html));
+
+    return html;
+}
+
+//<
+const boldPattern = /\[b(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/b\]/g;
+const italicPattern = /\[i(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/i\]/g;
+const underlinePattern = /\[u(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/u\]/g;
+const headerPattern = /\[(h[1-6])(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/\1\]/g;
+const imgPattern = /\[img src=\^(.*?)\^(?: alt=\^(.*?)\^)?(?: title=\^(.*?)\^)?(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\]/g;
+const brPattern = /\[br(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\]/g;
+const ulPattern = /\[ul(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/ul\]/gs;
+const liPattern = /\[li(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/li\]/g;
+const aPattern = /\[a href=\^(.*?)\^(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/a\]/g;
+const pPattern = /\[p(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/p\]/gs;
+const divPattern = /\[div(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/div\]/gs;
+const comparePattern = /\[compare src1=\^(.*?)\^ src2=\^(.*?)\^(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\]/g;
+const buttonPattern = /\[button href=\^(.*?)\^(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/button\]/g;
+const buttonWrapPattern = /\[buttonWrap(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\](.*?)\[\/buttonWrap\]/gs;
+//>
+
+/**
+ * Preprocesses the input string to remove empty attributes for easier pattern matching.
+ * @param {string} input - The input string with custom markdown.
+ * @returns {string} - The processed string with empty attributes removed.
+ */
+function preprocessInput(input) {
+    return input.replace(/(?: alt=\^\^)?(?: title=\^\^)?(?: href=\^\^)?(?: src=\^\^)?(?: src1=\^\^)?(?: src2=\^\^)?/g, '');
+}
+
+/**
+ * Formats class and ID attributes for HTML elements.
+ * @param {string|null} clazz - The class attribute value.
+ * @param {string|null} id - The ID attribute value.
+ * @returns {string} - Formatted class and ID attributes for inclusion in an HTML tag.
+ */
+function formatAttributes(clazz, id) {
+    let classAttr = clazz ? ` class="${clazz}"` : '';
+    let idAttr = id ? ` id="${id}"` : '';
+    return `${classAttr}${idAttr}`;
+}
+
+/**
+ * Applies pattern replacements to convert custom markdown into HTML, supporting optional classes and IDs.
+ * @param {string} html - The HTML string with custom markdown patterns.
+ * @returns {string} - The HTML string with markdown patterns replaced.
+ */
+function applyPatternReplacements(html) {
+    html = html.replace(boldPattern, (match, clazz, id, content) => `<strong${formatAttributes(clazz, id)}>${content}</strong>`);
+    html = html.replace(italicPattern, (match, clazz, id, content) => `<em${formatAttributes(clazz, id)}>${content}</em>`);
+    html = html.replace(underlinePattern, (match, clazz, id, content) => `<u${formatAttributes(clazz, id)}>${content}</u>`);
+    html = html.replace(headerPattern, (match, level, clazz, id, content) => `<${level}${formatAttributes(clazz, id)}>${content}</${level}>`);
+    html = html.replace(brPattern, (match, clazz, id) => `<br${formatAttributes(clazz, id)} />`);
+    html = html.replace(pPattern, (match, clazz, id, content) => `<p${formatAttributes(clazz, id)}>${content}</p>`);
+    html = html.replace(liPattern, (match, clazz, id, content) => `<li${formatAttributes(clazz, id)}>${content}</li>`);
+    html = html.replace(ulPattern, (match, clazz, id, content) => `<ul${formatAttributes(clazz, id)}>${content}</ul>`);
+    html = html.replace(divPattern, (match, clazz, id, content) => `<div${formatAttributes(clazz, id)}>${content}</div>`);
+
+    html = replaceComplexPatterns(html);
+
+    return html;
+}
+
+/**
+ * Handles replacement of complex patterns such as images, image comparison, buttons, and button wraps.
+ * @param {string} html - The HTML string to process.
+ * @returns {string} - The HTML string with complex markdown patterns replaced.
+ */
+function replaceComplexPatterns(html) {
+    html = html.replace(imgPattern, (match, src, alt, title, clazz, id) => {
+        let imgTag = `<img src="uploads/${src}" alt="${alt || src}" title="${title || src}"${formatAttributes(clazz, id)} loading="lazy"/>`;
+        return imgTag;
+    });
+
+    html = html.replace(comparePattern, (match, src1, src2, clazz, id) => {
+        return `
+            <div class="image-spliter"${formatAttributes(clazz, id)}>
+                <div class="mover"></div>
+                <img class="img-left" src="${src1}" alt="Image 1" loading="lazy">
+                <img class="img-right" src="${src2}" alt="Image 2" loading="lazy">
+            </div>
+        `;
+    });
+
+    html = html.replace(buttonPattern, (match, href, clazz, id, content) => {
+        return `<a href="${href}" class="button${clazz ? ` ${clazz}` : ''}"${id ? ` id="${id}"` : ''}>${content}</a>`;
+    });
+
+    html = html.replace(buttonWrapPattern, async (match, clazz, id, content) => {
+        const processedContent = await markdown(content); // Recursively process markdown inside the buttonWrap
+        return `<div class="blogButtonWrap"${formatAttributes(clazz, id)}>${processedContent}</div>`;
+    });
+
+    html = html.replace(aPattern, (match, href, clazz, id, content) => `<a href="${href}"${formatAttributes(clazz, id)}>${content}</a>`);
+
+    return html;
+}

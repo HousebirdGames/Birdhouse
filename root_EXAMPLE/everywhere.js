@@ -99,6 +99,7 @@ window.hook('create-routes', async function () {
 
     // As we want something to view on our front page, let's reuse the example component, but not add it to the menu.
     main.createPublicRoute('/', 'Example Page', 'article', 'components/example.js', false, 'front-page');
+    main.createPublicRoute('/index.html', 'Example Page', 'article', 'components/example.js', false, 'front-page');
 
     // We can also use the same component for different routes. But this time without an icon.
     main.createPublicRoute('/example-2', 'Also the Example Page', '', 'components/example.js', true);

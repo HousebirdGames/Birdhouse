@@ -9,13 +9,40 @@ import { initializeInputValidation } from '../../Birdhouse/src/modules/input-val
 import { } from '../../everywhere.js';
 import config from '../../config.js';
 
+/**
+ * A reference to the popup manager instance used throughout the application.
+ * This variable is initially set to null and should be assigned to an instance of the popup manager once initialized.
+ * It is exported to allow for consistent popup management across different parts of the application.
+ */
 export let popupManager = null;
-export const urlPrefix = (window.location.pathname.toLowerCase().startsWith(config.localhostPath.toLowerCase()) ? config.localhostPath.toLocaleLowerCase() : '').toLowerCase();
-const redirect404ToHome = true;
-const anchorScrollOffset = 54;
-const excludedPaths = [].map(path => path.toLowerCase());
 
+/**
+ * The prefix for URLs within the application, dynamically set based on the current window location.
+ * If the application is being served from the path specified in config.localhostPath (typically during development),
+ * urlPrefix is set to this path to correctly handle routing. In production, or if not served from config.localhostPath,
+ * it defaults to an empty string. This ensures that URL routing works correctly in both development and production environments.
+ */
+export const urlPrefix = (window.location.pathname.toLowerCase().startsWith(config.localhostPath.toLowerCase()) ? config.localhostPath.toLocaleLowerCase() : '').toLowerCase();
+
+/**
+ * Indicates whether the current route is dynamically generated.
+ * Set to false by default; it should be updated dynamically based on the application's routing logic to reflect
+ * whether the current page was loaded from a dynamic route.
+ */
 export let dynamicRoute = false;
+
+const redirect404ToHome = false;
+
+/**
+ * The vertical offset in pixels to account for when performing anchor scrolling.
+ */
+const anchorScrollOffset = 54;
+
+/**
+ * A list of paths that are excluded from certain application logic, such as redirection.
+ * Paths are converted to lowercase to ensure case-insensitive matching. Modify this list as needed for your application.
+ */
+const excludedPaths = [].map(path => path.toLowerCase());
 
 const actions = [];
 
@@ -79,8 +106,25 @@ let fetchingUserData = false;
 export let isMaintenanceMode = config.maintenanceModeWithFailedBackend != undefined ? config.maintenanceModeWithFailedBackend : true;
 export const cookieIdentifier = `_${sanitizeIdentifier(config.cookieIdentifier)}`;
 
-export function sanitizeIdentifier(title) {
-    return title.replace(/[\s,;=]/g, '_');
+/**
+ * Sanitizes the input string by replacing all occurrences of spaces, commas, semicolons, and equals signs with underscores.
+ * This transformation makes the identifier more suitable for contexts where such characters are prohibited or undesired, 
+ * such as in URL slugs or programming variable names.
+ *
+ * The function targets the following characters for replacement:
+ * - Spaces (including tabs and other whitespace characters)
+ * - Commas (,)
+ * - Semicolons (;)
+ * - Equals signs (=)
+ *
+ * Each of these characters is replaced with an underscore (_) to ensure the sanitized string complies with common usage requirements
+ * where these specific characters may be problematic.
+ *
+ * @param {string} identifier The original string to be sanitized.
+ * @return {string} The sanitized string, with the specified characters replaced by underscores.
+ */
+export function sanitizeIdentifier(identifier) {
+    return identifier.replace(/[\s,;=]/g, '_');
 }
 
 if (config.enableImageComparisonSliders) {
@@ -182,6 +226,7 @@ export const isUserPromise = getIsUser();
 const routesArray = [];
 
 function findRoute(path) {
+    console.log('Finding route:', path, routesArray);
     return routesArray.find(route => route.path.toLowerCase() === path.toLowerCase());
 }
 
@@ -213,100 +258,72 @@ async function generateMenuHTML(routeType) {
 }
 
 export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
-    componentPath = urlPrefix + '/src/' + componentPath;
-    const route = {
-        path: (urlPrefix + slug).toLowerCase(),
-        name: name,
-        type: 'admin',
-        inMenu: inMenu,
-        materialIcon: materialIcon,
-        componentPath: componentPath,
-        dynamic: dynamic,
-        displayFull: true,
-        Handler: async function () {
-            try {
-                if (!(await isAdminPromise)) {
-                    return 'Not authorized to access this page';
-                }
-
-                const { default: Component } = await import(componentPath);
-                const content = await Component(data).catch((error) => {
-                    console.error(error);
-                    return failedToLoadComponent();
-                });
-                return content;
-            } catch (error) {
-                console.error(error);
-                return failedToLoadComponent();
-            }
-        }
-    };
+    const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, true,
+        () => isAdminPromise ? Promise.resolve() : Promise.reject('Not authorized to access this page'),
+        `${componentPath}.css`);
     routesArray.push(route);
 }
 
 export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
-    componentPath = urlPrefix + '/src/' + componentPath;
-    const route = {
-        path: (urlPrefix + slug).toLowerCase(),
-        name: name,
-        type: 'user',
-        inMenu: inMenu,
-        materialIcon: materialIcon,
-        componentPath: componentPath,
-        dynamic: dynamic,
-        displayFull: displayFull,
-        Handler: async function () {
-            try {
-                if (!(await isUserPromise)) {
-                    return `
-                    <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
-                    <div class="linkRow">
-                    <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
-                    <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
-                    </div></div>`;
-                }
-
-                const { default: Component } = await import(componentPath);
-                const content = await Component(data).catch((error) => {
-                    console.error(error);
-                    return failedToLoadComponent();
-                });
-                return content;
-            } catch (error) {
-                console.error(error);
-                return failedToLoadComponent();
-            }
-        }
-    };
+    const route = constructRoute('user', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
+        () => isUserPromise ? Promise.resolve() : `
+            <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
+            <div class="linkRow">
+            <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
+            <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
+            </div></div>`,
+        '');
     routesArray.push(route);
 }
 
 export function createPublicRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
-    componentPath = urlPrefix + '/src/' + componentPath;
-    const route = {
+    const route = constructRoute('public', slug, name, materialIcon, componentPath, inMenu, data, dynamic, true, () => Promise.resolve());
+    routesArray.push(route);
+}
+
+function constructRoute(type, slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull, customLogic, additionalCSSPath = '') {
+    const fullPath = urlPrefix + '/src/' + componentPath;
+    return {
         path: (urlPrefix + slug).toLowerCase(),
         name: name,
-        type: 'public',
+        type: type,
         inMenu: inMenu,
         materialIcon: materialIcon,
-        componentPath: componentPath,
+        componentPath: fullPath,
         dynamic: dynamic,
-        displayFull: true,
+        data: data,
+        displayFull: displayFull,
         Handler: async function () {
-            try {
-                const { default: Component } = await import(componentPath);
-                const content = await Component(data).catch((error) => {
-                    console.error(error);
-                    return failedToLoadComponent();
-                });
-                return content;
-            } catch (error) {
-                console.error(error);
-                return failedToLoadComponent();
-            }
+            return routeHandler(fullPath, data, customLogic);
         }
     };
-    routesArray.push(route);
+}
+
+async function routeHandler(componentPath, data, customLogic = async () => true) {
+    try {
+        const customLogicResult = await customLogic();
+        if (typeof customLogicResult === 'string') {
+            return customLogicResult;
+        }
+
+        const module = await import(componentPath + '.js');
+        if (typeof module.default !== 'function') {
+            throw new Error('The imported module does not export a default function.');
+        }
+
+        const Component = module.default;
+        const content = await Component(data).catch((error) => {
+            console.error(error);
+            return failedToLoadComponent();
+        });
+
+        loadCSS(componentPath + '.css', true);
+
+        return content;
+    } catch (error) {
+        console.error(error);
+        return failedToLoadComponent();
+    }
 }
 
 export function normalizePath(path) {
@@ -384,10 +401,10 @@ export async function handleRouteChange() {
 
     isHandlingRouteChange = true;
 
+    removeAllComponentCSS();
     unmountActions();
 
     await window.triggerHook('on-handle-route-change');
-
 
     if (config.enableInfoBar) {
         const infoBar = document.getElementById('infoBar');
@@ -442,6 +459,7 @@ export async function handleRouteChange() {
 
         if (!route) {
             dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
+            console.log('Dynamic route:', dynamicRoute);
 
             if (!route) {
                 route = findRoute(path);
@@ -1161,15 +1179,44 @@ export function removeQueryParameter(name, url = window.location.href) {
     window.history.pushState({ path: urlObj.href }, '', urlObj.href);
 }
 
-function loadCSS(url) {
-    var link = document.createElement('link');
-    link.rel = 'stylesheet';
-    link.href = getRelativePath(url) + '?v=' + config.version;
+export async function loadCSS(url, forComponent = false) {
+    try {
+        const response = await fetch(getRelativePath(url) + '?v=' + config.version);
 
-    document.head.appendChild(link);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        } else {
+            const contentType = response.headers.get('content-type');
+            if (!contentType || !contentType.includes('text/css')) {
+                if (forComponent) {
+                    return;
+                }
+                throw new Error('The fetched file is not a CSS file');
+            }
+
+            var link = document.createElement('link');
+            link.rel = 'stylesheet';
+            if (forComponent) {
+                link.classList.add('componentCSS');
+            }
+            link.href = getRelativePath(url) + '?v=' + config.version;
+
+            document.head.appendChild(link);
+        }
+    } catch (e) {
+        console.log(`There was a problem loading the CSS file: ${e.message}`);
+    }
 }
 
-const deleteAllCookies = () => {
+export function removeAllComponentCSS() {
+    const links = document.querySelectorAll('.componentCSS');
+
+    links.forEach(link => {
+        link.parentNode.removeChild(link);
+    });
+}
+
+export const deleteAllCookies = () => {
     const cookies = document.cookie.split(";");
 
     for (const cookie of cookies) {
@@ -1179,13 +1226,13 @@ const deleteAllCookies = () => {
     }
 };
 
-const deleteSpecificCookies = (cookieNames) => {
+export const deleteSpecificCookies = (cookieNames) => {
     for (const name of cookieNames) {
         document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
     }
 };
 
-const deleteSpecificLocalStorageEntries = (keys) => {
+export const deleteSpecificLocalStorageEntries = (keys) => {
     for (const key of keys) {
         localStorage.removeItem(key);
     }
@@ -1256,7 +1303,7 @@ async function addAdminButtons() {
         if (await isAdminPromise) {
             const adminBarHtml = await generateMenuHTML('admin');
             adminBar.innerHTML = adminBarHtml;
-            loadCSS(urlPrefix + '/admin-style.css');
+            await loadCSS(urlPrefix + '/admin-style.css');
 
             const pageSpeedButton = document.createElement("button");
             pageSpeedButton.classList.add("menuButton");

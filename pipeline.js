@@ -25,6 +25,7 @@ const UglifyJS = require("uglify-js");
 const CleanCSS = require('clean-css');
 const sharp = require('sharp');
 const vm = require('vm');
+const { parse } = require('node-html-parser');
 
 const pathSegments = path.dirname(__dirname).split(path.sep);
 const localhostPath = pathSegments[pathSegments.length - 1];
@@ -51,6 +52,7 @@ const defaultPipelineConfig = {
     productionPath: 'my_app_production',
     stagingPath: 'my_app_staging',
     htaccessFile: 'UPLOAD-THIS.htaccess',
+    basePath: '/',
     databaseDir: 'database',
     uncompressedDir: 'img/uploads-uncompressed',
     compressedDir: 'uploads',
@@ -830,7 +832,7 @@ async function uploadFilesToServer(filesToCache, applicationPath) {
     let filesToUpload = [...filesToCache, './Birdhouse/filesToCache.js'];
 
     if (databaseDir) {
-        await readFilesFromDirectory(databaseDir, filesToUpload);
+        await readFilesFromDirectory(databaseDir, filesToCache);
     }
 
     //service worker is uploaded last to not trigger recaching on clients before all files are uploaded
@@ -900,18 +902,43 @@ async function uploadFilesToDirectory(filesToUpload, sftp, applicationPath) {
         total: filesToUpload.length
     });
 
-    await Promise.all(filesToUpload.map(async (file) => {
+    for (const file of filesToUpload) {
         infoFlag && console.log(chalk.gray(`    Uploading: ${file}`));
 
         const relativeFilePath = file.replace(/^\.\/|^\//, '');
         const remotePath = `/${applicationPath}/${relativeFilePath.replace(/\\/g, '/')}`;
 
-        const minifiedFilePath = path.join(minifiedDirectory, path.basename(file));
-        const localFilePath = fs.existsSync(minifiedFilePath) && minifyFlag ? minifiedFilePath : file;
+        let localFilePath = path.join(minifiedDirectory, path.basename(file));
+        localFilePath = fs.existsSync(localFilePath) && minifyFlag ? localFilePath : file;
 
-        await sftp.fastPut(localFilePath, remotePath);
+        if (file.endsWith('index.html')) {
+            const content = await fsPromises.readFile(localFilePath, 'utf-8');
+            const root = parse(content);
+
+            const baseTag = root.querySelector('base');
+            if (config.basePath) {
+                if (baseTag) {
+                    baseTag.setAttribute('href', config.basePath);
+                } else {
+                    const head = root.querySelector('head');
+                    head.prepend(`<base href="${config.basePath}">`);
+                }
+            } else {
+                baseTag && baseTag.remove();
+            }
+
+            const tempFilePath = localFilePath + '.temp';
+            await fsPromises.writeFile(tempFilePath, root.toString());
+
+            await sftp.fastPut(tempFilePath, remotePath);
+
+            await fsPromises.unlink(tempFilePath);
+        } else {
+            await sftp.fastPut(localFilePath, remotePath);
+        }
+
         uploadBar.tick();
-    }));
+    }
 
     if (htaccessFile) {
         await sftp.fastPut(htaccessFile, `/${applicationPath}/.htaccess`);

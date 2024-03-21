@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://github.com/HousebirdGames/Birdhouse/blob/main/root_EXAMPLE/img/logos-originals/Birdhouse-Logo.png?raw=true" width="200">
+  <img src="https://birdhouse-js.com/img/icons/Icon-3000x3000.png" width="200">
 </p>
 
 # **Birdhouse**
