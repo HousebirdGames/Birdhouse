@@ -45,6 +45,7 @@ const defaultConfig = {
     enableImageComparisonSliders: true,
     enableInfoBar: false,
     userLoginEnabled: false,
+    redirect404ToRoot: false,
 };
 
 const defaultPipelineConfig = {

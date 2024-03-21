@@ -31,7 +31,7 @@ export const urlPrefix = (window.location.pathname.toLowerCase().startsWith(conf
  */
 export let dynamicRoute = false;
 
-const redirect404ToHome = false;
+const redirect404ToRoot = config.redirect404ToRoot != undefined ? config.redirect404ToRoot : false;
 
 /**
  * The vertical offset in pixels to account for when performing anchor scrolling.
@@ -481,7 +481,7 @@ export async function handleRouteChange() {
     }
 
     if (!component) {
-        if (redirect404ToHome) {
+        if (redirect404ToRoot) {
             window.location.replace(`${urlPrefix}/`);
         } else if (content) {
             content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
