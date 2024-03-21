@@ -1202,18 +1202,36 @@ export async function loadCSS(url, forComponent = false) {
             link.href = getRelativePath(url) + '?v=' + config.version;
 
             document.head.appendChild(link);
+            return true;
         }
     } catch (e) {
         console.log(`There was a problem loading the CSS file: ${e.message}`);
+        return false;
     }
+}
+
+export function removeCSS(url) {
+    const links = document.querySelectorAll(`link[href^="${getRelativePath(url)}"]`);
+
+    let removed = false;
+    links.forEach(link => {
+        if (link.href.includes(getRelativePath(url))) {
+            link.parentNode.removeChild(link);
+            removed = true;
+        }
+    });
+    return removed;
 }
 
 export function removeAllComponentCSS() {
     const links = document.querySelectorAll('.componentCSS');
 
+    let removed = false;
     links.forEach(link => {
         link.parentNode.removeChild(link);
+        removed = true;
     });
+    return removed;
 }
 
 export const deleteAllCookies = () => {

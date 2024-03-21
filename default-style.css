@@ -1,4 +1,9 @@
-/* Contains the default styles to help you get started with the project quickly. It includes the CSS Normalize, Material Icons as well as some basic styles for the popup component and more. */
+/*
+Contains the default styles to help you get started with the project quickly.
+It includes the CSS Normalize, Material Icons as well as some basic styles for the popup component and more.
+[br][br]
+You can always remove it from your index.html, copy parts from it and check it for updates to useful defaults.
+*/
 
 @font-face {
     font-family: 'Material Icons';

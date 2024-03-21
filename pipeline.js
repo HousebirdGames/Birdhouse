@@ -1,16 +1,16 @@
-/**
- * This script automates the release process of a progressive web application via sftp.
- * 
- * To use this script:
- * 
- * 1. Install the necessary dependencies by running `npm install` in the terminal.
- * 2. Run the script with `node pipeline.js -init`. This will initialize the project by copying the necessary files and creating the config files.
- * 3. Run the script with `node pipeline.js -h`. This will display the help message.
- * 4. If you want to release to production, add the `-production` or `-p` flag.
- * 
- * Please ensure that you have the necessary permissions to read from and write to the specified directories and files,
- * and to connect to the SFTP server.
- */
+/*
+This script automates the release process of a progressive web application via sftp.
+[br][br]
+To use this script:
+[br]
+1. Install the necessary dependencies by running [i]npm install[/i] in the terminal.[br]
+2. Run the script with [i]node pipeline.js -init[/i]. This will initialize the project by copying the necessary files and creating the config files.[br]
+3. Run the script with [i]node pipeline.js -h[/i]. This will display the help message.[br]
+4. If you want to release to production, add the [i]-production[/i] or [i]-p[/i] flag.[br]
+[br]
+Please ensure that you have the necessary permissions to read from and write to the specified directories and files,
+and to connect to the SFTP server.
+*/
 process.chdir('..');
 
 const startTime = new Date();
