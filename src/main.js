@@ -226,7 +226,6 @@ export const isUserPromise = getIsUser();
 const routesArray = [];
 
 function findRoute(path) {
-    console.log('Finding route:', path, routesArray);
     return routesArray.find(route => route.path.toLowerCase() === path.toLowerCase());
 }
 
@@ -459,7 +458,6 @@ export async function handleRouteChange() {
 
         if (!route) {
             dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
-            console.log('Dynamic route:', dynamicRoute);
 
             if (!route) {
                 route = findRoute(path);
@@ -801,6 +799,13 @@ function addLinkListeners() {
         if (linkElement) {
             let href = linkElement.getAttribute('href');
             Analytics("Click: " + href);
+
+            if (href.startsWith('#')) {
+                history.pushState(null, '', window.location.pathname + href);
+                scroll();
+                event.preventDefault();
+                return;
+            }
 
             const url = new URL(href, window.location.href);
             const cleanHref = url.origin + url.pathname;
