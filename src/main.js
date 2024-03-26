@@ -13,6 +13,7 @@ import config from '../../config.js';
  * A reference to the popup manager instance used throughout the application.
  * This variable is initially set to null and should be assigned to an instance of the popup manager once initialized.
  * It is exported to allow for consistent popup management across different parts of the application.
+ * @type {PopupManager}
  */
 export let popupManager = null;
 
@@ -28,21 +29,20 @@ export const urlPrefix = (window.location.pathname.toLowerCase().startsWith(conf
  * Indicates whether the current route is dynamically generated.
  * Set to false by default; it should be updated dynamically based on the application's routing logic to reflect
  * whether the current page was loaded from a dynamic route.
+ * @type {boolean}
  */
 export let dynamicRoute = false;
 
 const redirect404ToRoot = config.redirect404ToRoot != undefined ? config.redirect404ToRoot : false;
 
-/**
- * The vertical offset in pixels to account for when performing anchor scrolling.
- */
 const anchorScrollOffset = 54;
 
 /**
  * A list of paths that are excluded from certain application logic, such as redirection.
  * Paths are converted to lowercase to ensure case-insensitive matching. Modify this list as needed for your application.
+ * @type {string[]}
  */
-const excludedPaths = [].map(path => path.toLowerCase());
+export const excludedPaths = [].map(path => path.toLowerCase());
 
 const actions = [];
 
@@ -1049,6 +1049,10 @@ export function isInViewport(element, offset = 0) {
     );
 }
 
+/**
+ * Copies the inner text of the element with the given ID to the clipboard.
+ * @param {string} id The ID of the element.
+ */
 window.CopyToClipboard = function CopyToClipboardFromID(id) {
     const text = document.getElementById(id).innerText;
     navigator.clipboard.writeText(text).then(function () {
@@ -1058,6 +1062,11 @@ window.CopyToClipboard = function CopyToClipboardFromID(id) {
     });
 }
 
+/**
+ * Copies the given string to the clipboard.
+ * @param {string} string The string to copy.
+ * @param {boolean} [openPopup=true] Whether to open a popup after copying.
+ */
 window.CopyToClipboard = function CopyToClipboard(string, openPopup = true) {
     navigator.clipboard.writeText(string).then(function () {
         if (openPopup) {
