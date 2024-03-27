@@ -5,7 +5,7 @@
  * If an error occurs during retrieval, it logs the error and returns null.
  *
  * @param {string} name The name of the setting to retrieve.
- * @param {boolean} [useCache=false] Determines whether to give the 'no-store' or 'default' cache setting to the database-get-setting hook.
+ * @param {boolean} useCache=false Determines whether to give the 'no-store' or 'default' cache setting to the database-get-setting hook.
  * @returns {Promise<any|null>} The value of the setting if found and no error occurs, otherwise null.
  */
 export async function getSetting(name, useCache = false) {

@@ -3,6 +3,7 @@
 /**
  * Defines markdown elements with their Birdhouse markdown representations.
  * Provides a mapping of common HTML elements to their Birdhouse markdown format for easy reference.
+ * @type {Object<string, string>}
  */
 export const markdownElements = {
     'Paragraph': '[p]Paragraph[/p]',
@@ -34,7 +35,7 @@ export const markdownElements = {
 export async function markdown(input) {
     let html = input;
 
-    html = applyPatternReplacements(preprocessInput(html));
+    html = await applyPatternReplacements(preprocessInput(html));
 
     return html;
 }
@@ -58,8 +59,8 @@ const buttonWrapPattern = /\[buttonWrap(?: class=\^(.*?)\^)?(?: id=\^(.*?)\^)?\]
 
 /**
  * Preprocesses the input string to remove empty attributes for easier pattern matching.
- * @param {string} input - The input string with custom markdown.
- * @returns {string} - The processed string with empty attributes removed.
+ * @param {string} input The input string with custom markdown.
+ * @returns {string} The processed string with empty attributes removed.
  */
 function preprocessInput(input) {
     return input.replace(/(?: alt=\^\^)?(?: title=\^\^)?(?: href=\^\^)?(?: src=\^\^)?(?: src1=\^\^)?(?: src2=\^\^)?/g, '');
@@ -67,9 +68,9 @@ function preprocessInput(input) {
 
 /**
  * Formats class and ID attributes for HTML elements.
- * @param {string|null} clazz - The class attribute value.
- * @param {string|null} id - The ID attribute value.
- * @returns {string} - Formatted class and ID attributes for inclusion in an HTML tag.
+ * @param {string|null} clazz The class attribute value.
+ * @param {string|null} id The ID attribute value.
+ * @returns {string} Formatted class and ID attributes for inclusion in an HTML tag.
  */
 function formatAttributes(clazz, id) {
     let classAttr = clazz ? ` class="${clazz}"` : '';
@@ -79,10 +80,12 @@ function formatAttributes(clazz, id) {
 
 /**
  * Applies pattern replacements to convert custom markdown into HTML, supporting optional classes and IDs.
- * @param {string} html - The HTML string with custom markdown patterns.
- * @returns {string} - The HTML string with markdown patterns replaced.
+ * This is also where the custom patterns from the add-markdown-patterns hook are applied.
+ * @param {string} html The HTML string with custom markdown patterns.
+ * @returns {string} The HTML string with markdown patterns replaced.
  */
-function applyPatternReplacements(html) {
+async function applyPatternReplacements(html) {
+    html = await window.triggerHook('add-markdown-patterns', html);
     html = html.replace(boldPattern, (match, clazz, id, content) => `<strong${formatAttributes(clazz, id)}>${content}</strong>`);
     html = html.replace(italicPattern, (match, clazz, id, content) => `<em${formatAttributes(clazz, id)}>${content}</em>`);
     html = html.replace(underlinePattern, (match, clazz, id, content) => `<u${formatAttributes(clazz, id)}>${content}</u>`);
@@ -100,8 +103,8 @@ function applyPatternReplacements(html) {
 
 /**
  * Handles replacement of complex patterns such as images, image comparison, buttons, and button wraps.
- * @param {string} html - The HTML string to process.
- * @returns {string} - The HTML string with complex markdown patterns replaced.
+ * @param {string} html The HTML string to process.
+ * @returns {string} The HTML string with complex markdown patterns replaced.
  */
 function replaceComplexPatterns(html) {
     html = html.replace(imgPattern, (match, src, alt, title, clazz, id) => {

@@ -1,4 +1,4 @@
-/*Birdhouse was created and published by Felix T. Vogel in 2024*/
+/*This file contains the core variables and functions for the Birdhouse framework. It also has several useful common functions.*/
 
 import { } from '../../Birdhouse/src/modules/hooks.js';
 import PopupManager from '../../Birdhouse/src/modules/popupManager.js';
@@ -39,10 +39,22 @@ const anchorScrollOffset = 54;
 
 /**
  * A list of paths that are excluded from certain application logic, such as redirection.
- * Paths are converted to lowercase to ensure case-insensitive matching. Modify this list as needed for your application.
+ * Paths are converted to lowercase to ensure case-insensitive matching. Modify this list as needed for your application in the config file.
  * @type {string[]}
  */
-export const excludedPaths = [].map(path => path.toLowerCase());
+export const excludedPaths = config.excludedPaths.map(path => path.toLowerCase());
+
+export function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
 
 const actions = [];
 
@@ -50,16 +62,21 @@ export function action(action) {
     if (typeof action === 'function') {
         actions.push(action);
     } else {
-        const handler = (event) => {
+        let handler = action.handler;
+        if (action.debounce) {
+            handler = debounce(action.handler, action.debounce);
+        }
+
+        const eventHandler = (event) => {
             if (action.selector) {
                 if (event.target.matches(action.selector)) {
-                    action.handler(event);
+                    handler(event);
                 }
             } else {
-                action.handler(event);
+                handler(event);
             }
         };
-        actions.push({ ...action, handler });
+        actions.push({ ...action, handler: eventHandler });
     }
 }
 
@@ -961,7 +978,6 @@ export async function getMenuHTML() {
 
 let textareaResizerAdded = false;
 let resizeTimeout;
-let debounceTimeout;
 
 export function textareaResizer() {
     if (!textareaResizerAdded) {
@@ -980,13 +996,6 @@ export function textareaResizer() {
     }
 
     resizeAllTextareasDelayed();
-
-    function debounce(func, delay) {
-        return function (...args) {
-            clearTimeout(debounceTimeout);
-            debounceTimeout = setTimeout(() => func.apply(this, args), delay);
-        }
-    }
 
     function resizeAllTextareasDelayed() {
         clearTimeout(resizeTimeout);
@@ -1056,7 +1065,7 @@ export function isInViewport(element, offset = 0) {
 window.CopyToClipboard = function CopyToClipboardFromID(id) {
     const text = document.getElementById(id).innerText;
     navigator.clipboard.writeText(text).then(function () {
-        alertPopup('Copied to clipboard', 'Copied: ' + string);
+        alertPopup('Copied to clipboard', 'Copied: ' + text);
     }, function (err) {
         console.error('Could not copy text: ', err);
     });
@@ -1064,13 +1073,13 @@ window.CopyToClipboard = function CopyToClipboardFromID(id) {
 
 /**
  * Copies the given string to the clipboard.
- * @param {string} string The string to copy.
- * @param {boolean} [openPopup=true] Whether to open a popup after copying.
+ * @param {string} stringToCopy The string to copy.
+ * @param {boolean} openPopup=true Whether to open a popup after copying.
  */
-window.CopyToClipboard = function CopyToClipboard(string, openPopup = true) {
-    navigator.clipboard.writeText(string).then(function () {
+window.CopyToClipboard = function CopyToClipboard(stringToCopy, openPopup = true) {
+    navigator.clipboard.writeText(stringToCopy).then(function () {
         if (openPopup) {
-            alertPopup('Copied to clipboard', 'Copied: ' + string);
+            alertPopup('Copied to clipboard', 'Copied: ' + stringToCopy);
         }
     }, function (err) {
         console.error('Could not copy text: ', err);
