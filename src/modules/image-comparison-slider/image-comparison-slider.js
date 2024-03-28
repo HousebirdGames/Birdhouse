@@ -1,3 +1,27 @@
+/*
+This script enables image comparison functionality by providing an interactive
+way to compare two images side by side. 
+
+
+You don't need to call this function. Just set the "enableImageComparisonSliders"
+property to true in the config.js file. Then main.js will call this function.
+
+
+Users can click and drag a splitter to reveal more or less of each image.
+*/
+
+/**
+ * Initializes image comparison sliders found within the document. Each image comparison slider allows
+ * users to interactively compare two images by clicking and dragging a central splitter. This function
+ * identifies all elements with a specific class designating them as image comparison splitters and sets
+ * up the necessary event listeners to handle user interactions, such as dragging the splitter.
+ *
+ * 
+ * The initialization process includes setting up mouse and touch event listeners to handle the dragging
+ * action, adjusting the position of the splitter based on user input, and updating the visible portion
+ * of the images based on the splitter's position. It also ensures that the splitter's position is correctly
+ * reset when the browser window is resized.
+ */
 export function initImageComparisons() {
 
     function initializeSplitter(mover) {

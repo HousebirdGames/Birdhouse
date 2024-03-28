@@ -1,3 +1,35 @@
+/*
+Implements an infinite scroll mechanism for dynamically loading content as the user scrolls.
+The script supports customizable settings for initial items, incremental load amounts, and
+integrates with local or session storage for caching purposes.
+*/
+
+/**
+ * Initializes an infinite scroll functionality on a specified container.
+ *
+ * 
+ * Configuration object:
+ * 
+ * - initialLimit: The initial number of items to load.
+ * 
+ * - add: Number of items to add with each additional load.
+ * 
+ * - page: Starting page number.
+ * 
+ * - container: DOM element to append fetched items to.
+ * 
+ * - fetchURL: URL to fetch data from.
+ * 
+ * - displayFunction: Function to process and display fetched items.
+ * 
+ * - searchParameter: Function returning current search parameters.
+ * 
+ * - emptyMessage: Message to display when no items are available.
+ * 
+ * - storageType: 'local' or 'session' to enable caching. If not provided, caching is disabled.
+ * @param {Object} config Configuration object for infinite scroll as defined above.
+ * @returns An object containing methods to setup, teardown, and refresh the infinite scroll functionality.
+ */
 export default function InfiniteScroll(config) {
     let initialLimit = config.initialLimit || 3;
     let add = config.add || 0;

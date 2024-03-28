@@ -1,5 +1,16 @@
+/* 
+This is an example of a custom component that can be used within the Birdhouse framework.
+*/
 import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta, alertPopup, action } from "../../Birdhouse/src/main.js";
 
+/**
+ * Demonstrates various uses of the action system within Birdhouse to interact with UI elements.
+ * It showcases updating page metadata, handling query parameters, and adding event listeners
+ * with both global and scoped delegation.
+ * 
+ * @param {Object} exampleData Data to be used within the component, demonstrating dynamic content.
+ * @returns {string} The HTML content of the example component.
+ */
 export default async function Example(exampleData) {
     updateTitleAndMeta('Example Page', 'This is an example page.');
 

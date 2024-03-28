@@ -1,3 +1,24 @@
+/*
+The service worker is a fundamental component for enabling a progressive web app to operate offline.
+By caching essential files listed in the filesToCache.js script—automatically generated during the
+project's build process—it ensures that these files are available from the cache when no network
+connection is available.
+
+
+During deployment, the build pipeline automatically relocates the service worker to the root
+directory of the project. It also generates a config-sw.js file based on your project's config.js
+file. This configuration specifies the cache version and outlines which paths should be excluded
+from caching. The cache version, dictated by config.js, is pivotal for cache management and is
+refreshed anytime there's a version update via the pipeline.
+
+
+When handling requests to the database (indicated by URLs starting with "database/..."), the
+service worker attempts to fetch the data from the network first. If the network request fails,
+it looks for the data in the cache. Failing to find the data in the cache too, it returns a status
+code of 503, signaling service unavailability. This approach ensures data availability, even in
+offline scenarios, enhancing the user experience by leveraging modern web capabilities.
+*/
+
 self.CACHE_VERSION = "1.0.0.0";
 importScripts('./config-sw.js' + `?v=${self.CACHE_VERSION}`);
 self.importScripts('Birdhouse/filesToCache.js' + `?v=${self.CACHE_VERSION}`);

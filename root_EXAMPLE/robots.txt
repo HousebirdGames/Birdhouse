@@ -1,5 +1,5 @@
+# This robots.txt serves as a template for managing how search engines interact with your site. Tailor its directives to align with the specific requirements and objectives of your project, guiding search engine bots in a way that optimizes your site's visibility and indexing strategy.
 
-# robots.txt for https://YOUR_DOMAIN.EXAMPLE
 User-agent: *
 
 Disallow: /uploads/

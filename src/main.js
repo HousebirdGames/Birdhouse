@@ -11,6 +11,8 @@ import config from '../../config.js';
 
 /**
  * A reference to the popup manager instance used throughout the application.
+ * 
+ * 
  * This variable is initially set to null and should be assigned to an instance of the popup manager once initialized.
  * It is exported to allow for consistent popup management across different parts of the application.
  * @type {PopupManager}
@@ -19,14 +21,19 @@ export let popupManager = null;
 
 /**
  * The prefix for URLs within the application, dynamically set based on the current window location.
+ * 
+ * 
  * If the application is being served from the path specified in config.localhostPath (typically during development),
  * urlPrefix is set to this path to correctly handle routing. In production, or if not served from config.localhostPath,
  * it defaults to an empty string. This ensures that URL routing works correctly in both development and production environments.
+ * @type {string}
  */
 export const urlPrefix = (window.location.pathname.toLowerCase().startsWith(config.localhostPath.toLowerCase()) ? config.localhostPath.toLocaleLowerCase() : '').toLowerCase();
 
 /**
  * Indicates whether the current route is dynamically generated.
+ * 
+ * 
  * Set to false by default; it should be updated dynamically based on the application's routing logic to reflect
  * whether the current page was loaded from a dynamic route.
  * @type {boolean}
@@ -39,11 +46,44 @@ const anchorScrollOffset = 54;
 
 /**
  * A list of paths that are excluded from certain application logic, such as redirection.
+ * 
+ * 
  * Paths are converted to lowercase to ensure case-insensitive matching. Modify this list as needed for your application in the config file.
  * @type {string[]}
  */
 export const excludedPaths = config.excludedPaths.map(path => path.toLowerCase());
 
+/**
+ * If user login is implemented, this variable can store the user data retrieved from the server.
+ * @type {Object|null}
+*/
+export let userData = null;
+let fetchingUserData = false;
+
+/**
+ * Signals whether the application is in maintenance mode. If `maintenanceModeWithFailedBackend` is set to `true` in the config file,
+ * the application will enter maintenance mode if the backend fails to respond. Otherwise, maintenance mode is only set by the server.
+ * 
+ * 
+ * The `get-maintenance-mode` hook is used to fetch the maintenance mode status from the server, which is triggeren on route change.
+ * @type {boolean}
+ */
+export let isMaintenanceMode = config.maintenanceModeWithFailedBackend != undefined ? config.maintenanceModeWithFailedBackend : true;
+
+/**
+ * The identifier used to store cookies. This identifier is appended to the cookie name to ensure uniqueness.
+ * @type {string}
+ */
+export const cookieIdentifier = `_${sanitizeIdentifier(config.cookieIdentifier)}`;
+
+/**
+ * Creates a debounced function that delays invoking `func` until after `wait` milliseconds have elapsed
+ * since the last time the debounced function was invoked.
+ * 
+ * @param {Function} func The function to debounce.
+ * @param {number} wait The number of milliseconds to delay.
+ * @returns {Function} Returns the new debounced function.
+ */
 export function debounce(func, wait) {
     let timeout;
     return function executedFunction(...args) {
@@ -58,6 +98,22 @@ export function debounce(func, wait) {
 
 const actions = [];
 
+/**
+ * Registers an action to be executed. Actions can either be functions to be executed directly,
+ * or objects defining more complex behavior such as event listening.
+ * 
+ * 
+ * If an action object is provided, it can specify a debounce period, an event type, a selector to
+ * delegate events, the container which the delegate listener is added to, and a handler function.
+ * 
+ * 
+ * If the action is a function, it is simply added to the action queue to be executed after the components are loaded.
+ * 
+ * 
+ * For examples of how to use the action system, see the example component (Birdhouse/root_EXAMPLE/src/components/example.js).
+ *
+ * @param {Function|Object} action - The action to register. If an object, it should contain at least `type` and `handler` properties.
+ */
 export function action(action) {
     if (typeof action === 'function') {
         actions.push(action);
@@ -80,6 +136,16 @@ export function action(action) {
     }
 }
 
+/**
+ * Iterates through all registered actions and sets them up accordingly.
+ * This function is called automatically after the `before-actions-setup` hook.
+ * 
+ * 
+ * For function actions, it executes them immediately. For object actions, it adds
+ * event listeners to the specified containers. If a container is specified, the event
+ * listener is added to all elements matching the container selector. Otherwise, it defaults
+ * to the document.
+ */
 export function setupActions() {
     for (const action of actions) {
         if (typeof action === 'function') {
@@ -99,6 +165,15 @@ export function setupActions() {
     }
 }
 
+/**
+ * Cleans up and removes all event listeners registered through the action system.
+ * It is called automatically when a route change is handled.
+ * 
+ * 
+ * This function iterates through all registered actions, removing event listeners
+ * from their specified containers or from the document if no container is specified.
+ * After all event listeners are removed, the action list is cleared.
+ */
 export function unmountActions() {
     for (const action of actions) {
         if (typeof action !== 'function') {
@@ -118,30 +193,73 @@ export function unmountActions() {
     actions.length = 0;
 }
 
-export let userData = null;
-let fetchingUserData = false;
-export let isMaintenanceMode = config.maintenanceModeWithFailedBackend != undefined ? config.maintenanceModeWithFailedBackend : true;
-export const cookieIdentifier = `_${sanitizeIdentifier(config.cookieIdentifier)}`;
-
 /**
  * Sanitizes the input string by replacing all occurrences of spaces, commas, semicolons, and equals signs with underscores.
  * This transformation makes the identifier more suitable for contexts where such characters are prohibited or undesired, 
  * such as in URL slugs or programming variable names.
  *
+ * 
  * The function targets the following characters for replacement:
+ * 
  * - Spaces (including tabs and other whitespace characters)
+ * 
  * - Commas (,)
+ * 
  * - Semicolons (;)
+ * 
  * - Equals signs (=)
  *
+ * 
  * Each of these characters is replaced with an underscore (_) to ensure the sanitized string complies with common usage requirements
  * where these specific characters may be problematic.
- *
+ * 
  * @param {string} identifier The original string to be sanitized.
  * @return {string} The sanitized string, with the specified characters replaced by underscores.
  */
 export function sanitizeIdentifier(identifier) {
     return identifier.replace(/[\s,;=]/g, '_');
+}
+
+export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
+    const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, true,
+        () => isAdminPromise ? Promise.resolve() : Promise.reject('Not authorized to access this page'),
+        `${componentPath}.css`);
+    routesArray.push(route);
+}
+
+export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+    const route = constructRoute('user', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
+        () => isUserPromise ? Promise.resolve() : `
+            <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
+            <div class="linkRow">
+            <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
+            <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
+            </div></div>`,
+        '');
+    routesArray.push(route);
+}
+
+export function createPublicRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+    const route = constructRoute('public', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull, () => Promise.resolve());
+    routesArray.push(route);
+}
+
+function constructRoute(type, slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull, customLogic, additionalCSSPath = '') {
+    const fullPath = urlPrefix + '/src/' + componentPath;
+    return {
+        path: (urlPrefix + slug).toLowerCase(),
+        name: name,
+        type: type,
+        inMenu: inMenu,
+        materialIcon: materialIcon,
+        componentPath: fullPath,
+        dynamic: dynamic,
+        data: data,
+        displayFull: displayFull,
+        Handler: async function () {
+            return routeHandler(fullPath, data, customLogic);
+        }
+    };
 }
 
 if (config.enableImageComparisonSliders) {
@@ -181,29 +299,11 @@ async function fetchUserData() {
     }
 }
 
-async function checkRememberMe() {
+export async function checkRememberMe() {
     const remembered = await window.triggerHook('check-remember-me') || false;
 
     if (remembered) {
         window.location.reload();
-    }
-}
-
-export async function fetchItems(url) {
-    const response = await fetch(url, {
-        method: 'GET',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-    });
-
-    const responseData = await response.json();
-    if (response.ok) {
-        return responseData.items;
-    } else {
-        console.error('Failed to fetch data:', responseData.message);
-        alertPopup('Failed to fetch data');
-        return [];
     }
 }
 
@@ -273,48 +373,6 @@ async function generateMenuHTML(routeType) {
     return html;
 }
 
-export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
-    const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, true,
-        () => isAdminPromise ? Promise.resolve() : Promise.reject('Not authorized to access this page'),
-        `${componentPath}.css`);
-    routesArray.push(route);
-}
-
-export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
-    const route = constructRoute('user', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
-        () => isUserPromise ? Promise.resolve() : `
-            <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
-            <div class="linkRow">
-            <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
-            <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
-            </div></div>`,
-        '');
-    routesArray.push(route);
-}
-
-export function createPublicRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
-    const route = constructRoute('public', slug, name, materialIcon, componentPath, inMenu, data, dynamic, true, () => Promise.resolve());
-    routesArray.push(route);
-}
-
-function constructRoute(type, slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull, customLogic, additionalCSSPath = '') {
-    const fullPath = urlPrefix + '/src/' + componentPath;
-    return {
-        path: (urlPrefix + slug).toLowerCase(),
-        name: name,
-        type: type,
-        inMenu: inMenu,
-        materialIcon: materialIcon,
-        componentPath: fullPath,
-        dynamic: dynamic,
-        data: data,
-        displayFull: displayFull,
-        Handler: async function () {
-            return routeHandler(fullPath, data, customLogic);
-        }
-    };
-}
-
 async function routeHandler(componentPath, data, customLogic = async () => true) {
     try {
         const customLogicResult = await customLogic();
@@ -339,44 +397,6 @@ async function routeHandler(componentPath, data, customLogic = async () => true)
     } catch (error) {
         console.error(error);
         return failedToLoadComponent();
-    }
-}
-
-export function normalizePath(path) {
-    path = path.toLowerCase();
-
-    let normalizedPath = path;
-
-    if (path !== urlPrefix + "/" && path.endsWith("/")) {
-        normalizedPath = path.slice(0, -1);
-    }
-
-    for (const excludedPath of excludedPaths) {
-        if (normalizedPath === excludedPath.toLowerCase() || normalizedPath === excludedPath.toLowerCase() + '/') {
-            window.location.href = excludedPath;
-            return;
-        }
-    }
-
-    return normalizedPath;
-}
-
-export function getRelativePath(relativePath) {
-    return new URL(relativePath, window.location.origin + urlPrefix + '/').pathname;
-}
-
-export async function addAdditionalComponent(componentPath, data = null) {
-    const content = document.getElementById("content");
-    if (content) {
-        const additionalComponent = await getComponent(componentPath, data).catch((error) => {
-            console.error(error);
-            return 'Failed to load additional component';
-        });
-        const additionalContent = await additionalComponent(data).catch((error) => {
-            console.error(error);
-            return 'Failed to load additional component';
-        });
-        content.insertAdjacentHTML('beforeend', additionalContent);
     }
 }
 
@@ -510,13 +530,12 @@ export async function handleRouteChange() {
                 await window.triggerHook('on-component-loaded');
 
                 content.innerHTML = contentHTML;
-
-                scroll();
             } catch (error) {
                 console.error(error);
                 content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
-                unmountActions();
             }
+
+            scroll();
         }
     }
 
@@ -595,6 +614,8 @@ export async function handleRouteChange() {
             console.error('Failed to load module', err);
         }
     }
+
+    setTimeout(scroll, 500);
 }
 
 function scroll() {
@@ -772,17 +793,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     window.triggerHook('page-loaded');
 });
 
-export function addBaseContent(htmlContent) {
-    const baseContent = document.getElementById("baseContent");
-    baseContent.insertAdjacentHTML('beforeend', htmlContent);
-}
-
-export async function redirectUserToDashboard() {
-    if (await isUserPromise) {
-        window.location.replace(`${urlPrefix}/dashboard`);
-    }
-}
-
 function failedToLoadComponent() {
     return `
     <div class="contentBox accent">
@@ -847,14 +857,6 @@ function addLinkListeners() {
     document.body.addEventListener('click', linkClickListener);
 }
 
-export function goToRoute(href) {
-    if (!href.startsWith('#')) {
-        const normalizedHref = normalizePath(href);
-        history.pushState(null, '', normalizedHref);
-        handleRouteChange();
-    }
-}
-
 function assignInstallButton() {
     let deferredPrompt;
 
@@ -899,7 +901,7 @@ function showUpdateNotes(force = false) {
 
         if (updatePopup && updateContent && updateNotesButtonsContainer) {
             updateContent.innerHTML = `
-              ${latestPatch.title ? `<h4 class="leftText">New: Version ${latestPatch.version}</h4><h2>${latestPatch.title}</h2>` : `<h4 class="leftText"></h4><h2>New Version ${latestPatch.version}</h2>`}
+              ${latestPatch.title ? `<h4 class="leftText">New: Version ${latestPatch.version}</h4><h3>${latestPatch.title}</h3>` : `<h4 class="leftText"></h4><h3>New Version ${latestPatch.version}</h3>`}
               <ul id="updateNotesList">
                 ${latestPatch.notes.map((note) => `<li>${note}</li>`).join('')}
               </ul>
@@ -916,7 +918,7 @@ function showUpdateNotes(force = false) {
                 }
 
                 button.addEventListener("click", () => {
-                    updateContent.querySelector("h2").textContent = `${patch.title ? `${patch.title}` : `Version ${patch.version}`}`;
+                    updateContent.querySelector("h3").textContent = `${patch.title ? `${patch.title}` : `Version ${patch.version}`}`;
                     updateContent.querySelector("h4").textContent = `${patch.title ? `Version ${patch.version}` : ``}`;
                     document.getElementById("updateNotesList").innerHTML = patch.notes
                         .map((note) => `<li>${note}</li>`)
@@ -964,6 +966,63 @@ function initializeCookiesAndStoragePopupButtons() {
                 popupManager.openPopup("storageAcknowledgementPopup");
             });
         });
+    }
+}
+
+export function normalizePath(path) {
+    path = path.toLowerCase();
+
+    let normalizedPath = path;
+
+    if (path !== urlPrefix + "/" && path.endsWith("/")) {
+        normalizedPath = path.slice(0, -1);
+    }
+
+    for (const excludedPath of excludedPaths) {
+        if (normalizedPath === excludedPath.toLowerCase() || normalizedPath === excludedPath.toLowerCase() + '/') {
+            window.location.href = excludedPath;
+            return;
+        }
+    }
+
+    return normalizedPath;
+}
+
+export function getRelativePath(relativePath) {
+    return new URL(relativePath, window.location.origin + urlPrefix + '/').pathname;
+}
+
+export async function addAdditionalComponent(componentPath, data = null) {
+    const content = document.getElementById("content");
+    if (content) {
+        const additionalComponent = await getComponent(componentPath, data).catch((error) => {
+            console.error(error);
+            return 'Failed to load additional component';
+        });
+        const additionalContent = await additionalComponent(data).catch((error) => {
+            console.error(error);
+            return 'Failed to load additional component';
+        });
+        content.insertAdjacentHTML('beforeend', additionalContent);
+    }
+}
+
+export function addBaseContent(htmlContent) {
+    const baseContent = document.getElementById("baseContent");
+    baseContent.insertAdjacentHTML('beforeend', htmlContent);
+}
+
+export async function redirectUserToDashboard() {
+    if (await isUserPromise) {
+        window.location.replace(`${urlPrefix}/dashboard`);
+    }
+}
+
+export function goToRoute(href) {
+    if (!href.startsWith('#')) {
+        const normalizedHref = normalizePath(href);
+        history.pushState(null, '', normalizedHref);
+        handleRouteChange();
     }
 }
 
@@ -1059,25 +1118,28 @@ export function isInViewport(element, offset = 0) {
 }
 
 /**
- * Copies the inner text of the element with the given ID to the clipboard.
- * @param {string} id The ID of the element.
- */
-window.CopyToClipboard = function CopyToClipboardFromID(id) {
-    const text = document.getElementById(id).innerText;
-    navigator.clipboard.writeText(text).then(function () {
-        alertPopup('Copied to clipboard', 'Copied: ' + text);
-    }, function (err) {
-        console.error('Could not copy text: ', err);
-    });
-}
-
-/**
  * Copies the given string to the clipboard.
  * @param {string} stringToCopy The string to copy.
  * @param {boolean} openPopup=true Whether to open a popup after copying.
  */
 window.CopyToClipboard = function CopyToClipboard(stringToCopy, openPopup = true) {
     navigator.clipboard.writeText(stringToCopy).then(function () {
+        if (openPopup) {
+            alertPopup('Copied to clipboard', 'Copied: ' + stringToCopy);
+        }
+    }, function (err) {
+        console.error('Could not copy text: ', err);
+    });
+}
+
+/**
+ * Copies the inner text of the element with the given ID to the clipboard.
+ * @param {string} id The ID of the element.
+ * @param {boolean} openPopup=true Whether to open a popup after copying.
+ */
+window.CopyToClipboardFromID = function CopyToClipboardFromID(id, openPopup = true) {
+    const stringToCopy = document.getElementById(id).innerText;
+    navigator.clipboard.writeText(text).then(function () {
         if (openPopup) {
             alertPopup('Copied to clipboard', 'Copied: ' + stringToCopy);
         }

@@ -1,12 +1,19 @@
+/*
+This file is loaded on every page and can be used to add custom JavaScript code that should be executed everywhere, like routing, hooks, and more.
+
+
+By default it comes with many examples and explanations to help you get started. You can remove them or comment them out to clean up the file.
+
+
+Remember to keep this file up to date with the latest version of the example everywhere.js file as more hooks might become available or necessary in the future.
+*/
+
 // Required imports
 import * as main from "./Birdhouse/src/main.js";
 import { displayError, clearError } from "./Birdhouse/src/modules/input-validation.js";
 
 // Your custom imports
 import Example from './src/components/example.js';
-
-// More hooks might become available or necessary in the future.
-// Remember to keep your everywhere.js file up to date with the latest version of the example everywhere.js file.
 
 window.hook('before-adding-base-content', async function (menuHTML) {
     const headerElement = document.getElementById("header");

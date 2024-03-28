@@ -1,3 +1,19 @@
+/*
+This file provides functionality for validating input and textarea elements across the application.
+
+
+It integrates both client-side and server-side validation mechanisms, debouncing calls to improve performance.
+
+
+When `enableInputValidation` is set to true in `config.js`, `main.js` automatically initializes this validation process.
+So there is probably no need to call these functions manually, except for the clearError function, when implementing
+custom validation logic through the `validate-field` hook or maybe the `validateEmail` function.
+*/
+
+/**
+ * Attaches event listeners to the document body to perform input validation on all input and textarea elements.
+ * This function is automatically called if input validation is enabled in the application configuration.
+ */
 export function initializeInputValidation() {
     document.body.addEventListener('input', function (event) {
         validateInputs(event)
@@ -9,7 +25,13 @@ export function initializeInputValidation() {
 
 const debouncedValidateInputClient = debounce(validateInputClient, 100);
 const debouncedValidateInputServer = debounce(validateInputServer, 2000);
-function validateInputs(event) {
+/**
+ * Validates input elements on the document body by debouncing and calling validation functions.
+ * It distinguishes between client-side and server-side validation depending on the input's requirements.
+ * 
+ * @param {Event} event The DOM event triggered by user interaction with input or textarea elements.
+ */
+export function validateInputs(event) {
     if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
         debouncedValidateInputClient(event);
         debouncedValidateInputServer(event);
@@ -55,11 +77,22 @@ function addMissingErrorMessage(input) {
     return errorElement;
 }
 
-async function validateInputClient(event) {
+/**
+ * Debounced wrapper for client-side validation of input elements.
+ *
+ * @param {Event} event The DOM event triggered by user interaction with input or textarea elements.
+ */
+export async function validateInputClient(event) {
     validateInput(event, false);
 }
 
-async function validateInputServer(event) {
+/**
+ * Debounced wrapper for server-side validation of input elements.
+ * This validation may involve asynchronous checks with the server to validate the input's content.
+ *
+ * @param {Event} event The DOM event triggered by user interaction with input or textarea elements.
+ */
+export async function validateInputServer(event) {
     validateInput(event, true);
 }
 
@@ -72,6 +105,13 @@ function debounce(func, wait) {
     };
 }
 
+/**
+ * Displays an error message associated with an input element.
+ *
+ * @param {HTMLElement} input The input element that has encountered a validation error.
+ * @param {HTMLElement} errorElement The DOM element where the error message will be displayed.
+ * @param {string} message='' The error message to display. If not provided, no message will be displayed.
+ */
 export function displayError(input, errorElement, message = '') {
     if (input && errorElement) {
         input.classList.add('invalid');
@@ -80,13 +120,30 @@ export function displayError(input, errorElement, message = '') {
     }
 }
 
+/**
+ * Clears any displayed error message associated with an input element.
+ *
+ * @param {HTMLElement} input The input element for which to clear the validation error.
+ * @param {HTMLElement} errorElement The DOM element that currently displays the error message.
+ */
 export function clearError(input, errorElement) {
     input.classList.remove('invalid');
     errorElement = addMissingErrorMessage(input);
     errorElement.style.maxHeight = '0';
 }
 
-async function validateField(input, errorElement, serverSide = true) {
+/**
+ * Performs the actual validation of an input field. This function is called by both client-side and server-side validation handlers.
+ * It checks for common validation criteria such as minimum length, maximum length, and email format.
+ * 
+ * This is were the `validate-field` hook is triggered, allowing for custom validation logic to be implemented. If the hook returns false,
+ * the error message is not cleared.
+ *
+ * @param {HTMLElement} input The input element to validate.
+ * @param {HTMLElement} errorElement The element to display error messages in.
+ * @param {boolean} serverSide=true Determines whether the validation should consider server-side logic.
+ */
+export async function validateField(input, errorElement, serverSide = true) {
     const value = input.value;
 
     if (input.minLength > 0 && value.length < input.minLength) {
@@ -111,7 +168,13 @@ async function validateField(input, errorElement, serverSide = true) {
     }
 }
 
-function validateEmail(email) {
+/**
+ * Validates whether a given string is a valid email address.
+ *
+ * @param {string} email The email address to validate.
+ * @return {boolean} Returns true if the email address is valid, false otherwise.
+ */
+export function validateEmail(email) {
     const re = /^(([^<>()\[\]\\.,;:\s@"']+(\.[^<>()\[\]\\.,;:\s@"']+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
     return re.test(String(email).toLowerCase());
 }

@@ -80,7 +80,7 @@ function formatAttributes(clazz, id) {
 
 /**
  * Applies pattern replacements to convert custom markdown into HTML, supporting optional classes and IDs.
- * This is also where the custom patterns from the add-markdown-patterns hook are applied.
+ * This is also where the custom patterns from the `add-markdown-patterns` hook are applied.
  * @param {string} html The HTML string with custom markdown patterns.
  * @returns {string} The HTML string with markdown patterns replaced.
  */
