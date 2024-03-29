@@ -64,6 +64,7 @@ export default class PopupManager {
             popup.classList.remove('fade-out-fast');
             popup.classList.add('fade-in-fast');
             popup.style.display = 'block';
+            document.body.classList.add('body-no-scroll');
             resizeAllTextareas();
         }
     }
@@ -89,5 +90,6 @@ export default class PopupManager {
                 popup.style.display = 'none';
             }, 200);
         }
+        document.body.classList.remove('body-no-scroll');
     }
 }

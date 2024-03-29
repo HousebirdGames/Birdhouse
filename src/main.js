@@ -15,7 +15,7 @@ import config from '../../config.js';
  * 
  * This variable is initially set to null and should be assigned to an instance of the popup manager once initialized.
  * It is exported to allow for consistent popup management across different parts of the application.
- * @type {PopupManager}
+ * @type {PopupManager|null}
  */
 export let popupManager = null;
 
@@ -220,13 +220,39 @@ export function sanitizeIdentifier(identifier) {
     return identifier.replace(/[\s,;=]/g, '_');
 }
 
-export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, dynamic = false) {
-    const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, true,
+/**
+ * Creates an admin route for the application. This function is essential for dynamically
+ * adding admin interfaces and ensuring that they are visible only to users with the appropriate permissions.
+ *
+ * @param {string} slug The URL slug for the route.
+ * @param {string} name The display name for the route.
+ * @param {string} materialIcon The Material icon identifier for the route.
+ * @param {string} componentPath The path to the component that should be loaded for this route.
+ * @param {boolean} inMenu Whether this route should be included in the navigation menu.
+ * @param {Object|null} data Optional data to pass to the route's component.
+ * @param {boolean} displayFull Whether to display the route with text in navigation contexts.
+ * @param {boolean} dynamic Whether the route is dynamically generated.
+ */
+export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+    const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
         () => isAdminPromise ? Promise.resolve() : Promise.reject('Not authorized to access this page'),
         `${componentPath}.css`);
     routesArray.push(route);
 }
 
+/**
+ * Creates a user route, visible to logged-in users. This function enables the dynamic addition
+ * of user-specific pages.
+ *
+ * @param {string} slug The URL slug for the route.
+ * @param {string} name The display name for the route.
+ * @param {string} materialIcon The Material icon identifier for the route.
+ * @param {string} componentPath The path to the component that should be loaded for this route.
+ * @param {boolean} inMenu Whether this route should be included in the navigation menu.
+ * @param {Object|null} data Optional data to pass to the route's component.
+ * @param {boolean} displayFull Whether to display the route with text in navigation contexts.
+ * @param {boolean} dynamic Whether the route is dynamically generated.
+ */
 export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
     const route = constructRoute('user', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
         () => isUserPromise ? Promise.resolve() : `
@@ -239,6 +265,19 @@ export function createUserRoute(slug, name, materialIcon, componentPath, inMenu 
     routesArray.push(route);
 }
 
+/**
+ * Creates a public route accessible to all visitors. This function facilitates the addition
+ * of general-access pages.
+ *
+ * @param {string} slug The URL slug for the route.
+ * @param {string} name The display name for the route.
+ * @param {string} materialIcon The Material icon identifier for the route.
+ * @param {string} componentPath The path to the component that should be loaded for this route.
+ * @param {boolean} inMenu Whether this route should be included in the navigation menu.
+ * @param {Object|null} data Optional data to pass to the route's component.
+ * @param {boolean} displayFull Whether to display the route with text in navigation contexts.
+ * @param {boolean} dynamic Whether the route is dynamically generated.
+ */
 export function createPublicRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
     const route = constructRoute('public', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull, () => Promise.resolve());
     routesArray.push(route);
