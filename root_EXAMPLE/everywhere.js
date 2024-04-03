@@ -86,6 +86,8 @@ window.hook('user-logged-in', async function () {
 window.hook('overwrite-default-base-content', async function () {
     // This hook will get triggered, when the default base content is about to be added.
     // You can use this hook to overwrite the default base content by returning HTML as a string.
+
+    // This will prevent the get-storage-acknowledgement-popup-content hook from being triggered.
 });
 
 window.hook('overwrite-404-content', async function () {

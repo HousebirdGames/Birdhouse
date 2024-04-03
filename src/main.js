@@ -60,6 +60,26 @@ export const excludedPaths = config.excludedPaths.map(path => path.toLowerCase()
 export let userData = null;
 let fetchingUserData = false;
 
+fetchUserData().catch(error => console.error('Error fetching user data:', error));
+
+/**
+ * A promise that resolves to a boolean indicating whether the current user is an administrator.
+ * Please refer to the fetch-user-data hook for more information as the user data is used here.
+ * 
+ * User data should include userData.loggedIn and userData.isAdmin properties.
+ * @type {Promise<boolean>}
+ */
+export const isAdminPromise = getIsAdmin();
+
+/**
+ * A promise that resolves to a boolean indicating whether the current user is a logged in.
+ * Please refer to the fetch-user-data hook for more information as the user data is used here.
+ * 
+ * User data should include userData.loggedIn and userData.isUser properties.
+ * @type {Promise<boolean>}
+ */
+export const isUserPromise = getIsUser();
+
 /**
  * Signals whether the application is in maintenance mode. If `maintenanceModeWithFailedBackend` is set to `true` in the config file,
  * the application will enter maintenance mode if the backend fails to respond. Otherwise, maintenance mode is only set by the server.
@@ -338,6 +358,14 @@ async function fetchUserData() {
     }
 }
 
+/**
+ * Triggers the check-remember-me hook to determine if there is a valid remember-me token stored.
+ * If the hook returns true, the page is reloaded to log in the user automatically.
+ * 
+ * 
+ * This function is called automatically when the application is loaded. It is used to reload
+ * the page if that is needed for the login to take effect.
+ */
 export async function checkRememberMe() {
     const remembered = await window.triggerHook('check-remember-me') || false;
 
@@ -345,8 +373,6 @@ export async function checkRememberMe() {
         window.location.reload();
     }
 }
-
-fetchUserData().catch(error => console.error('Error fetching user data:', error));
 
 async function getIsAdmin() {
     if (!userData) await fetchUserData();
@@ -376,15 +402,19 @@ async function getIsUser() {
     }
 }
 
-export const isAdminPromise = getIsAdmin();
-export const isUserPromise = getIsUser();
-
 const routesArray = [];
 
 function findRoute(path) {
     return routesArray.find(route => route.path.toLowerCase() === path.toLowerCase());
 }
 
+/**
+ * Retrieves an array of menu items based on the specified route type. Each menu item includes
+ * details such as path, display preference, material icon, presence of a name, and the name itself.
+ * 
+ * @param {string} routeType The type of route to filter menu items by.
+ * @returns {Object[]} An array of objects representing each menu item's details.
+ */
 export function getMenuItems(routeType) {
     return routesArray
         .filter(route => route.type === routeType && route.inMenu)
@@ -469,6 +499,16 @@ let isHandlingRouteChange = false;
 
 let path = normalizePath(window.location.pathname);
 
+/**
+ * Handles route changes within the application. This function is responsible for updating the
+ * application's state based on the new route, including updating the UI, fetching new data, and
+ * managing history. It ensures that only one route change is handled at a time to prevent race
+ * conditions.
+ * 
+ * 
+ * This function is called automatically when the application is loaded and when the user navigates,
+ * but it can also be triggered manually if needed.
+ */
 export async function handleRouteChange() {
     if (isHandlingRouteChange) {
         return;
@@ -1023,6 +1063,13 @@ function initializeCookiesAndStoragePopupButtons() {
     }
 }
 
+/**
+ * Normalizes the given path by converting it to lowercase and removing trailing slashes. It also
+ * ensures the path is redirected to a specified excluded path if matched.
+ * 
+ * @param {string} path The path to normalize.
+ * @returns {string} The normalized path.
+ */
 export function normalizePath(path) {
     path = path.toLowerCase();
 
@@ -1042,10 +1089,24 @@ export function normalizePath(path) {
     return normalizedPath;
 }
 
-export function getRelativePath(relativePath) {
-    return new URL(relativePath, window.location.origin + urlPrefix + '/').pathname;
+/**
+ * Converts a relative path to a fully qualified URL path, taking into account the application's
+ * URL prefix.
+ * 
+ * @param {string} path The path to convert.
+ * @returns {string} The relative URL path.
+ */
+export function getRelativePath(path) {
+    return new URL(path, window.location.origin + urlPrefix + '/').pathname;
 }
 
+/**
+ * Dynamically adds an additional component to the page's content area. Useful for loading
+ * components based on user interaction or other dynamic criteria.
+ * 
+ * @param {string} componentPath The path to the component's JavaScript module.
+ * @param {Object|null} data Optional data to pass to the component for rendering.
+ */
 export async function addAdditionalComponent(componentPath, data = null) {
     const content = document.getElementById("content");
     if (content) {
@@ -1061,17 +1122,32 @@ export async function addAdditionalComponent(componentPath, data = null) {
     }
 }
 
+/**
+ * Appends the provided HTML content to the base content area of the page.
+ * 
+ * @param {string} htmlContent The HTML content to add.
+ */
 export function addBaseContent(htmlContent) {
     const baseContent = document.getElementById("baseContent");
     baseContent.insertAdjacentHTML('beforeend', htmlContent);
 }
 
+/**
+ * Redirects the user to the dashboard route if they are logged in as a user. This function
+ * checks the user's authentication status and performs the redirection if applicable.
+ */
 export async function redirectUserToDashboard() {
     if (await isUserPromise) {
         window.location.replace(`${urlPrefix}/dashboard`);
     }
 }
 
+/**
+ * Redirects the browser to a new route. This function updates the browser's history and triggers
+ * the application's route handling mechanism.
+ * 
+ * @param {string} href The path to redirect to.
+ */
 export function goToRoute(href) {
     if (!href.startsWith('#')) {
         const normalizedHref = normalizePath(href);
@@ -1080,6 +1156,12 @@ export function goToRoute(href) {
     }
 }
 
+/**
+ * Generates the HTML content for the application's menu based on the current user's role. This
+ * function dynamically constructs the menu items and layout.
+ * 
+ * @returns {Promise<string>} A promise that resolves to the generated HTML content for the menu.
+ */
 export async function getMenuHTML() {
     if (await isUserPromise) {
         return await generateMenuHTML('user');
@@ -1092,7 +1174,7 @@ export async function getMenuHTML() {
 let textareaResizerAdded = false;
 let resizeTimeout;
 
-export function textareaResizer() {
+function textareaResizer() {
     if (!textareaResizerAdded) {
         document.body.addEventListener('input', delegateResize);
         document.body.addEventListener('click', delegateResize);
@@ -1144,6 +1226,14 @@ export function textareaResizer() {
 
 }
 
+/**
+ * A utility function to dynamically resize all textareas on the page. It is typically called
+ * when the page loads or when the content of the page changes to ensure all textareas are
+ * appropriately sized.
+ * 
+ * 
+ * Is typically called automatically, but can also be triggered manually if needed.
+ */
 export function resizeAllTextareas() {
     const allTextareas = document.querySelectorAll('textarea');
     const textareas = Array.from(allTextareas);
@@ -1161,6 +1251,15 @@ export function resizeAllTextareas() {
     });
 }
 
+/**
+ * Checks if the specified element is within the viewport. This can be used to determine if an
+ * element is visible to the user.
+ * 
+ * @param {Element} element The DOM element to check.
+ * @param {number} offset An optional offset to consider the element in viewport before it
+ * actually enters the viewport.
+ * @returns {boolean} True if the element is in the viewport, false otherwise.
+ */
 export function isInViewport(element, offset = 0) {
     const rect = element.getBoundingClientRect();
     return (
@@ -1202,6 +1301,14 @@ window.CopyToClipboardFromID = function CopyToClipboardFromID(id, openPopup = tr
     });
 }
 
+/**
+ * Updates the page's title and meta description. This can be used to dynamically change the
+ * information seen by users and search engines based on the current content or context of the
+ * page.
+ * 
+ * @param {string} title The new title of the page.
+ * @param {string} description The new meta description of the page.
+ */
 export function updateTitleAndMeta(title = '', description = config.pageDescription) {
     const metaDescpription = document.querySelector('meta[name="description"]');
     if (metaDescpription) {
@@ -1216,14 +1323,36 @@ export function updateTitleAndMeta(title = '', description = config.pageDescript
     }
 }
 
+/**
+ * Rounds a numeric value to the nearest half unit. This function is useful for ratings or
+ * measurements that are typically represented in half units.
+ * 
+ * @param {number} value The value to round.
+ * @returns {number} The rounded value.
+ */
 export function roundToHalf(value) {
     return Math.round(value * 2) / 2;
 }
 
+/**
+ * Rounds a numeric value to the nearest whole number. This function is useful for counts or
+ * other integer-based measurements.
+ * 
+ * @param {number} value The value to round.
+ * @returns {number} The rounded value.
+ */
 export function roundToFull(value) {
     return Math.round(value);
 }
 
+/**
+ * Sets a cookie with the specified name, value, and expiration days. This function simplifies
+ * the process of creating cookies.
+ * 
+ * @param {string} name The name of the cookie.
+ * @param {string} value The value of the cookie.
+ * @param {number} days The number of days until the cookie expires.
+ */
 export function setCookie(name, value, days) {
     const date = new Date();
     date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
@@ -1231,12 +1360,52 @@ export function setCookie(name, value, days) {
     document.cookie = `${name + cookieIdentifier}=${value}${expires}; path=/`;
 }
 
+/**
+ * Retrieves the value of a cookie with the specified name. If the cookie does not exist, null
+ * is returned.
+ * 
+ * @param {string} name The name of the cookie to retrieve.
+ * @returns {string|null} The value of the cookie or null if it does not exist.
+ */
 export function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name + cookieIdentifier}=`);
     if (parts.length === 2) return parts.pop().split(';').shift();
 }
 
+/**
+ * Deletes all cookies associated with the current domain. This function is useful for clearing
+ * session data.
+ */
+export function deleteAllCookies() {
+    const cookies = document.cookie.split(";");
+
+    for (const cookie of cookies) {
+        const eqPos = cookie.indexOf("=");
+        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    }
+};
+
+/**
+ * Deletes specific cookies by name. This function allows for targeted removal of cookies without
+ * affecting others.
+ * 
+ * @param {Array<string>} cookieNames An array of cookie names to delete.
+ */
+export function deleteSpecificCookies(cookieNames) {
+    for (const name of cookieNames) {
+        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+    }
+};
+
+/**
+ * Sets an item in the session storage. This function checks if the user has acknowledged
+ * storage usage using the getCookie("storageAcknowledgement") function before attempting to set the item.
+ * 
+ * @param {string} key The key under which to store the item.
+ * @param {string} value The value to store.
+ */
 export function setSessionStorageItem(key, value) {
     if (getCookie("storageAcknowledgement") === 'true' || key == "denyStorage") {
         try {
@@ -1247,6 +1416,13 @@ export function setSessionStorageItem(key, value) {
     }
 }
 
+/**
+ * Retrieves an item from the session storage. This function checks if the user has acknowledged
+ * storage usage using the getCookie("storageAcknowledgement") function before attempting to retrieve the item.
+ * 
+ * @param {string} key The key of the item to retrieve.
+ * @returns {string|null} The retrieved item or null if it does not exist.
+ */
 export function getSessionStorageItem(key) {
     if (getCookie("storageAcknowledgement") === 'true' || key == "denyStorage") {
         try {
@@ -1258,14 +1434,29 @@ export function getSessionStorageItem(key) {
     }
 }
 
+/**
+ * Deletes an item from the session storage.
+ * 
+ * @param {string} key The key of the item to delete.
+ * @returns {boolean} True if the item was successfully deleted, false otherwise.
+ */
 export function deleteSessionStorageItem(key) {
     try {
         sessionStorage.removeItem(key);
+        return true;
     } catch (e) {
         console.error('Failed to remove item from sessionStorage:', e);
+        return false;
     }
 }
 
+/**
+ * Sets an item in the local storage. This function checks if the user has acknowledged
+ * storage usage using the getCookie("storageAcknowledgement") function before attempting to set the item.
+ * 
+ * @param {string} key The key under which to store the item.
+ * @param {string} value The value to store.
+ */
 export function setLocalStorageItem(key, value) {
     if (getCookie("storageAcknowledgement") === 'true') {
         try {
@@ -1276,6 +1467,13 @@ export function setLocalStorageItem(key, value) {
     }
 }
 
+/**
+ * Retrieves an item from the local storage. This function checks if the user has acknowledged
+ * storage usage using the getCookie("storageAcknowledgement") function before attempting to retrieve the item.
+ * 
+ * @param {string} key The key of the item to retrieve.
+ * @returns {string|null} The retrieved item or null if it does not exist.
+ */
 export function getLocalStorageItem(key) {
     if (getCookie("storageAcknowledgement") === 'true') {
         try {
@@ -1287,14 +1485,42 @@ export function getLocalStorageItem(key) {
     }
 }
 
+/**
+ * Deletes an item from the local storage.
+ * 
+ * @param {string} key The key of the item to delete.
+ * @returns {boolean} True if the item was successfully deleted, false otherwise.
+ */
 export function deleteLocalStorageItem(key) {
     try {
         localStorage.removeItem(key);
+        return true;
     } catch (e) {
         console.error('Failed to remove item from localStorage:', e);
+        return false;
     }
 }
 
+/**
+ * Deletes specific entries from the local storage. This function allows for targeted removal of
+ * multiple local storage items without affecting others.
+ * 
+ * @param {Array<string>} keys An array of keys corresponding to the local storage items to delete.
+ */
+export function deleteSpecificLocalStorageEntries(keys) {
+    for (const key of keys) {
+        localStorage.removeItem(key);
+    }
+};
+
+/**
+ * Retrieves the value of a URL query parameter by name. If the parameter does not exist, null
+ * is returned.
+ * 
+ * @param {string} name The name of the query parameter to retrieve.
+ * @param {string} url Optional. The URL to parse. Defaults to the current window's URL.
+ * @returns {string|null} The value of the query parameter or null if it does not exist.
+ */
 export function getQueryParameterByName(name, url = window.location.href) {
     name = name.replace(/[\[\]]/g, '\\$&');
     var regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)', 'i'),
@@ -1304,6 +1530,13 @@ export function getQueryParameterByName(name, url = window.location.href) {
     return decodeURIComponent(results[2].replace(/\+/g, ' '));
 }
 
+/**
+ * Updates or adds a query parameter to the current URL and updates the browser's history.
+ * 
+ * @param {string} name The name of the query parameter to update or add.
+ * @param {string} value The value of the query parameter.
+ * @param {string} url Optional. The base URL to modify. Defaults to the current window's URL.
+ */
 export function updateOrAddQueryParameter(name, value, url = window.location.href) {
     const urlObj = new URL(url);
     urlObj.searchParams.set(name, value);
@@ -1311,6 +1544,12 @@ export function updateOrAddQueryParameter(name, value, url = window.location.hre
     window.history.pushState({ path: urlObj.href }, '', urlObj.href);
 }
 
+/**
+ * Removes a query parameter from the current URL and updates the browser's history.
+ * 
+ * @param {string} name The name of the query parameter to remove.
+ * @param {string} url Optional. The base URL to modify. Defaults to the current window's URL.
+ */
 export function removeQueryParameter(name, url = window.location.href) {
     const urlObj = new URL(url);
     urlObj.searchParams.delete(name);
@@ -1318,6 +1557,14 @@ export function removeQueryParameter(name, url = window.location.href) {
     window.history.pushState({ path: urlObj.href }, '', urlObj.href);
 }
 
+/**
+ * Loads a CSS file dynamically into the document's head. If the file is a component-specific
+ * stylesheet, it will be marked accordingly for potential removal when the component is unloaded.
+ * 
+ * @param {string} url The URL of the CSS file to load.
+ * @param {boolean} forComponent Optional. Specifies whether the CSS is for a specific component, allowing it to be targeted for removal.
+ * @returns {Promise<boolean>} A promise that resolves to true if the CSS file was successfully loaded or false if there was an error.
+ */
 export async function loadCSS(url, forComponent = false) {
     try {
         const response = await fetch(getRelativePath(url) + '?v=' + config.version);
@@ -1349,6 +1596,12 @@ export async function loadCSS(url, forComponent = false) {
     }
 }
 
+/**
+ * Removes a CSS file from the document based on its URL.
+ * 
+ * @param {string} url The URL of the CSS file to remove.
+ * @returns {boolean} True if the CSS file was successfully removed, false otherwise.
+ */
 export function removeCSS(url) {
     const links = document.querySelectorAll(`link[href^="${getRelativePath(url)}"]`);
 
@@ -1362,6 +1615,12 @@ export function removeCSS(url) {
     return removed;
 }
 
+/**
+ * Removes all component-specific CSS files from the document. This function is typically called
+ * when navigating away from a component to ensure its styles do not affect other parts of the application.
+ * 
+ * @returns {boolean} True if any CSS files were removed, false otherwise.
+ */
 export function removeAllComponentCSS() {
     const links = document.querySelectorAll('.componentCSS');
 
@@ -1373,30 +1632,18 @@ export function removeAllComponentCSS() {
     return removed;
 }
 
-export const deleteAllCookies = () => {
-    const cookies = document.cookie.split(";");
-
-    for (const cookie of cookies) {
-        const eqPos = cookie.indexOf("=");
-        const name = eqPos > -1 ? cookie.substr(0, eqPos) : cookie;
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-    }
-};
-
-export const deleteSpecificCookies = (cookieNames) => {
-    for (const name of cookieNames) {
-        document.cookie = name + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-    }
-};
-
-export const deleteSpecificLocalStorageEntries = (keys) => {
-    for (const key of keys) {
-        localStorage.removeItem(key);
-    }
-};
-
+/**
+ * Displays a customizable popup alert with optional content. This function is part of the popup
+ * management system and provides a consistent way to display alerts across the application.
+ * 
+ * @param {string} text The main text to display in the popup.
+ * @param {string} content Optional additional HTML content to display in the popup.
+ * @param {boolean} showCloseButton Specifies whether to show a close button on the popup.
+ * @param {string|null} addedClass An optional class to add to the popup for styling or identification.
+ */
 export function alertPopup(text = '', content = '', showCloseButton = true, addedClass = null) {
     const alertPopup = document.getElementById("alertPopup");
+
     if (addedClass) {
         alertPopup.classList.add(addedClass);
     }
@@ -1433,6 +1680,12 @@ export function alertPopup(text = '', content = '', showCloseButton = true, adde
     }
 }
 
+/**
+ * Closes an open alert popup. If a specific class was added to the popup when it was opened,
+ * it can be specified here to ensure only popups with that class are closed.
+ * 
+ * @param {string|null} addedClass The class that was added to the popup, if any.
+ */
 export function alertPopupClose(addedClass = null) {
     const alertPopup = document.getElementById("alertPopup");
     if (alertPopup) {
@@ -1445,6 +1698,14 @@ export function alertPopupClose(addedClass = null) {
     }
 }
 
+/**
+ * Assigns a click event listener to the menu button. This function is part of the popup management
+ * system and ensures that clicking the menu button opens the corresponding popup.
+ * 
+ * 
+ * This function is typically called automatically when the page loads, but might need to be called
+ * manually, when the button is added dynamically or when the button is replaced.
+ */
 export function assignMenuButton() {
     const menuButton = document.querySelector("button#menuButton");
     if (menuButton) {

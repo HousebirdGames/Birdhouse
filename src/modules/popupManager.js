@@ -53,6 +53,7 @@ export default class PopupManager {
     openPopup(popupID) {
         const popup = document.getElementById(popupID);
         if (popup) {
+            console.log('Opening popup');
             Array.from(document.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).forEach(el => {
                 if (!popup.contains(el)) {
                     el.setAttribute('data-prev-tabindex', el.tabIndex);

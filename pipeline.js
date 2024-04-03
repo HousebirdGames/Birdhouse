@@ -310,13 +310,13 @@ async function runScriptsSequentially(scriptPaths) {
         console.log(`Executing script: ${scriptPath}`);
         try {
             const { stdout, stderr } = await execAsync(`node ${scriptPath}`);
-            if (stdout) console.log('Output:', stdout);
+            if (stdout) console.log(stdout);
             if (stderr) console.error('Error:', stderr);
         } catch (error) {
             console.error(`Failed to execute script ${scriptPath}:`, error);
         }
     }
-    console.log('All scripts have been executed.');
+    console.log(`${scriptPaths.length} ${scriptPaths.length > 1 ? 'scripts have' : 'script has'} been executed.`);
 }
 
 async function initializeProject() {
