@@ -32,7 +32,7 @@ window.hook = function (name, callback) {
  */
 window.triggerHook = async function (name, ...args) {
     if (!window.hooks[name]) {
-        return args;
+        return null;
     }
 
     let hook = window.hookCache[name];

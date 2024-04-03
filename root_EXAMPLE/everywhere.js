@@ -83,6 +83,26 @@ window.hook('user-logged-in', async function () {
     // Triggered when a user is logged in
 });
 
+window.hook('overwrite-default-base-content', async function () {
+    // This hook will get triggered, when the default base content is about to be added.
+    // You can use this hook to overwrite the default base content by returning HTML as a string.
+});
+
+window.hook('overwrite-404-content', async function () {
+    // With this hook you can overwrite the default 404 component content.
+    // You can return HTML as a string.
+});
+
+window.hook('overwrite-oups-content', async function () {
+    // With this hook you can overwrite the default component content that is shown when something goes wrong when loading a component.
+    // You can return HTML as a string.
+});
+
+window.hook('overwrite-failed-to-load-content', async function () {
+    // With this hook you can overwrite the default component content that is shown when a component can't be retrieved (i.e. when offline and not cached).
+    // You can return HTML as a string.
+});
+
 window.hook('add-markdown-patterns', async function (html) {
     // Let's add some custom markdown patterns
     const examplePattern = /\[example_pattern\]/g;

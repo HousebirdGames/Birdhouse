@@ -554,11 +554,16 @@ export async function handleRouteChange() {
         popupManager.openPopup("storageAcknowledgementPopup");
     }
 
+    let oupsContent = await window.triggerHook('overwrite-oups-content');
+    if (oupsContent == null || overwrittenOupsContent == '') {
+        oupsContent = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>'
+    }
+
     if (!component) {
         if (redirect404ToRoot) {
             window.location.replace(`${urlPrefix}/`);
         } else if (content) {
-            content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
+            content.innerHTML = oupsContent;
         }
     } else {
         if (content) {
@@ -571,7 +576,7 @@ export async function handleRouteChange() {
                 content.innerHTML = contentHTML;
             } catch (error) {
                 console.error(error);
-                content.innerHTML = '<div class="contentBox"><h1>Oups! Something went wrong.</h1></div>';
+                content.innerHTML = oupsContent;
             }
 
             scroll();
@@ -680,19 +685,16 @@ document.addEventListener("DOMContentLoaded", async () => {
     routesArray.push({
         path: '*',
         type: 'public',
-        Handler: function NotFoundRouteHandler() {
+        Handler: async function NotFoundRouteHandler() {
+            const overwritten404Content = await triggerHook('overwrite-404-content');
+            if (overwritten404Content != null && overwritten404Content != '') {
+                return overwritten404Content;
+            }
+
             return `<div class="contentBox accent"><h1>404 Not Found</h1>
             <p>The page you're trying to access doesn't exist or has been moved. Please check the URL and try again.</p>
             <p>If you believe this is an error, please <a class="underline" href="${urlPrefix}/contact">contact us</a>.</p>
             </div>`;
-        }
-    });
-
-    routesArray.push({
-        path: 'offline',
-        type: 'public',
-        Handler: function NotFoundRouteHandler() {
-            return `<div class="contentBox accent"><h1>Are you offline?</h1><p>Maybe you have lost your internet connection or the server is down. Please make sure you are connected to the internet and try again.</p></div>`;
         }
     });
 
@@ -728,40 +730,48 @@ document.addEventListener("DOMContentLoaded", async () => {
     const menuHTML = await getMenuHTML();
     await window.triggerHook('before-adding-base-content', menuHTML);
 
-    addBaseContent(`
-    ${await window.triggerHook('get-popup-menu-html', menuHTML) || ''}
+    const overwrittenBaseContent = await triggerHook('overwrite-default-base-content');
+    if (overwrittenBaseContent == null || overwrittenBaseContent == '') {
+        addBaseContent(`
+            ${await window.triggerHook('get-popup-menu-html', menuHTML) || ''}
 
-	<div id="updatePopup" class="popup">
-		<div class="popup-content big">
-            <h2>Update Notes</h2>
-            <p class="versionInfo"></p>
-            <div id="updateNotesButtonsContainer"></div>
-			<div id="updateContent">
+            <div id="updatePopup" class="popup">
+                <div class="popup-content big">
+                    <h2>Update Notes</h2>
+                    <p class="versionInfo"></p>
+                    <div id="updateNotesButtonsContainer"></div>
+                    <div id="updateContent">
+                    </div>
+                    <button id="updateConfirm" class="">Alright</button>
+                </div>
             </div>
-			<button id="updateConfirm" class="">Alright</button>
-		</div>
-	</div>
 
-	<div id="storageAcknowledgementPopup" class="popup">
-		<div class="popup-content big">
-            ${await window.triggerHook('get-storage-acknowledgement-popup-content') || '<p>By clicking "I Understand and Agree", you allow this site to store cookies on your device and use the browsers local storage.</p>'}
+            <div id="storageAcknowledgementPopup" class="popup">
+                <div class="popup-content big">
+                    ${await window.triggerHook('get-storage-acknowledgement-popup-content') || '<p>By clicking "I Understand and Agree", you allow this site to store cookies on your device and use the browsers local storage.</p>'}
 
-            <div id="storageAcknowledgementButtonRow" class="inputRow center">
-                <button id="storageAcknowledgementPopupClose" class="closePopup closePopupIcon"><i class="material-icons">close</i></button>
-                <button id="clearButton" class="centerText">Deny permission<br>(deletes cookies<br>& local storage)</button>
-                <button id="storageAcknowledgementButton" class="closePopup centerText">I understand<br>and agree</button>
+                    <div id="storageAcknowledgementButtonRow" class="inputRow center">
+                        <button id="storageAcknowledgementPopupClose" class="closePopup closePopupIcon"><i class="material-icons">close</i></button>
+                        <button id="clearButton" class="centerText">Deny permission<br>(deletes cookies<br>& local storage)</button>
+                        <button id="storageAcknowledgementButton" class="closePopup centerText">I understand<br>and agree</button>
+                    </div>
+                </div>
             </div>
-		</div>
-	</div>
 
-	<div id="alertPopup" class="popup">
-		<div class="popup-content">
-			<h5 id="alertPopupText"></h5>
-            <div id="alertPopupContent"></div>
-            <button id="alertCloseButton" class="closePopup">Alright</button>
-		</div>
-	</div>
+            <div id="alertPopup" class="popup">
+                <div class="popup-content">
+                    <h5 id="alertPopupText"></h5>
+                    <div id="alertPopupContent"></div>
+                    <button id="alertCloseButton" class="closePopup">Alright</button>
+                </div>
+            </div>
         `);
+    }
+    else {
+        addBaseContent(`
+        ${overwrittenBaseContent}
+        `);
+    }
 
     await window.triggerHook('after-adding-base-content', menuHTML);
 
@@ -833,6 +843,11 @@ document.addEventListener("DOMContentLoaded", async () => {
 });
 
 function failedToLoadComponent() {
+    const overwrittenFailedToLoadContent = window.triggerHook('overwrite-failed-to-load-content');
+    if (overwrittenFailedToLoadContent != null && overwrittenFailedToLoadContent != '') {
+        return overwrittenFailedToLoadContent;
+    }
+
     return `
     <div class="contentBox accent">
     <h1>Are you offline?</h1>
