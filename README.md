@@ -10,6 +10,12 @@
 
 The Framework is a lightweight way to have a web app that mainly utilizes the resources of the users device. You can always integrate a backend, that allows for more functionality, but this framework is aimed at providing full offline capabilities to the enduser.
 
+## Documentation
+
+Access comprehensive Birdhouse documentation at [birdhouse-js.com](https://birdhouse-js.com).
+
+For private, local access to the documentation, leverage the [official Birdhouse GitHub repository](https://github.com/HousebirdGames/Birdhouse-Website). Simply clone the repository and deploy it locally, for example, with XAMPP.
+
 ## Quick Start
 
 Follow these steps to get the project up and running on your local machine:
