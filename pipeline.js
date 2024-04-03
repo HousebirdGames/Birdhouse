@@ -26,6 +26,10 @@ const CleanCSS = require('clean-css');
 const sharp = require('sharp');
 const vm = require('vm');
 const { parse } = require('node-html-parser');
+const { exec } = require('child_process');
+const util = require('util');
+
+const execAsync = util.promisify(exec);
 
 const pathSegments = path.dirname(__dirname).split(path.sep);
 const localhostPath = pathSegments[pathSegments.length - 1];
@@ -69,6 +73,8 @@ const defaultPipelineConfig = {
     ignoredFileTypes: ['.zip', '.rar', '.md', '.txt', '.psd', '.htaccess'],
     directoriesToInclude: ['src', 'fonts', 'img/favicons', 'img/icons', 'img/screenshots', 'uploads'],
     directoriesToExcludeFromCache: ['img/screenshots', 'uploads'],
+    preReleaseScripts: [],
+    postReleaseScripts: [],
 };
 
 const initializeFlag = process.argv.includes('-init') || process.argv.includes('-initialize');
@@ -175,6 +181,15 @@ async function main() {
 
     console.log('');
 
+    if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && config.preReleaseScripts.length > 0) {
+        await runScriptsSequentially(config.preReleaseScripts)
+            .then(() => {
+                console.log('Execution of all pre release scripts finished.')
+                console.log('');
+            })
+            .catch(error => console.error('An error occurred during pre release script execution:', error));
+    }
+
     if (initializeFlag) {
         await initializeProject();
         process.exit(0);
@@ -264,6 +279,15 @@ async function main() {
     console.log('');
     if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && filesUploaded > 0) {
         console.log(chalk.green(`Release process of version ${version} completed successfully.`));
+
+        if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && config.postReleaseScripts.length > 0) {
+            await runScriptsSequentially(config.postReleaseScripts)
+                .then(() => {
+                    console.log('Execution of all post release scripts finished.')
+                    console.log('');
+                })
+                .catch(error => console.error('An error occurred during post release script execution:', error));
+        }
     }
     else {
         console.log(chalk.green('Done.'));
@@ -279,6 +303,20 @@ async function main() {
     await addStatistics(`${minutes}:${seconds} minutes`, version, filesUploaded, filesToCache.length, cacheSize, minifiedSize);
 
     console.log('');
+}
+
+async function runScriptsSequentially(scriptPaths) {
+    for (const scriptPath of scriptPaths) {
+        console.log(`Executing script: ${scriptPath}`);
+        try {
+            const { stdout, stderr } = await execAsync(`node ${scriptPath}`);
+            if (stdout) console.log('Output:', stdout);
+            if (stderr) console.error('Error:', stderr);
+        } catch (error) {
+            console.error(`Failed to execute script ${scriptPath}:`, error);
+        }
+    }
+    console.log('All scripts have been executed.');
 }
 
 async function initializeProject() {
