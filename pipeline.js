@@ -876,8 +876,16 @@ async function uploadFilesToServer(filesToCache, applicationPath) {
 
     //service worker is uploaded last to not trigger recaching on clients before all files are uploaded
     filesToUpload.sort((a, b) => {
-        if (path.basename(a) === 'service-worker.js') return 1;
-        if (path.basename(b) === 'service-worker.js') return -1;
+        const filenameA = path.basename(a);
+        const filenameB = path.basename(b);
+
+        if (filenameA === 'service-worker.js') return 1;
+        if (filenameB === 'service-worker.js') return -1;
+        if (filenameA === 'config-sw.js') return 1;
+        if (filenameB === 'config-sw.js') return -1;
+        if (filenameA === 'config.js') return 1;
+        if (filenameB === 'config.js') return -1;
+
         return 0;
     });
 

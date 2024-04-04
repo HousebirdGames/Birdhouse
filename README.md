@@ -2,7 +2,7 @@
   <img src="https://birdhouse-js.com/img/icons/Icon-3000x3000.png" width="200">
 </p>
 
-# **Birdhouse**
+# **The Birdhouse Framework**
 
 ## Introduction
 
@@ -15,6 +15,19 @@ The Framework is a lightweight way to have a web app that mainly utilizes the re
 Access comprehensive Birdhouse documentation at [birdhouse-js.com](https://birdhouse-js.com).
 
 For private, local access to the documentation, leverage the [official Birdhouse GitHub repository](https://github.com/HousebirdGames/Birdhouse-Website). Simply clone the repository and deploy it locally, for example, with XAMPP.
+
+## Logo and Name Use Guidelines Notice
+
+When using the Birdhouse Framework in your projects, please adhere to our [Logo and Name Use Guidelines](https://github.com/HousebirdGames/Birdhouse/blob/main/GUIDELINES.md) to ensure respectful and correct usage of our brand assets.
+
+## License
+
+The Birdhouse Framework is open source software licensed under the [MIT license](https://opensource.org/licenses/MIT). This license grants you the permission to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the software, subject to the following conditions:
+
+- **Acknowledgment:** While not required, we appreciate acknowledgment or attribution when the Birdhouse Framework is used in a project. This can be in the form of a link back to our [GitHub repository](https://github.com/HousebirdGames/Birdhouse) or our official website, [birdhouse-js.com](https://birdhouse-js.com).
+- **Logo and Name Use:** The use of the Birdhouse Framework logo and name is governed by our Logo and Name Use Guidelines, which are designed to ensure the respectful and correct usage of our brand assets. Please refer to these guidelines for more details on how to use the Birdhouse Framework logo and name in your projects.
+
+This license does not require you to make your own project open source if you use the Birdhouse Framework.
 
 ## Quick Start
 
@@ -100,10 +113,21 @@ Ensure to keep the `pipeline-config.js` updated with any changes in project stru
 
 The `pipeline.js` script streamlines the release process. It will automatically compress any images from `uncompressedDir` to the `compressedDir`.
 
-### Steps:
+### Setting Up the Pipeline
 
-**First:** Configure the pipeline in `pipeline-config.js`.
-**Second:** Configure the `sftp-config.js`.
+To get started with deploying your Birdhouse project, you'll need to configure the deployment pipeline. This involves setting up configuration files for the pipeline itself and for secure file transfer (SFTP). Follow these steps to ensure everything is set up correctly:
+
+1. **Configure the Pipeline:**
+
+   Edit the `pipeline-config.js` file located in your Birdhouse directory. This file contains settings specific to your project, such as deployment targets and versioning. Fill in the necessary details according to your project's requirements.
+
+2. **Set Up SFTP:**
+
+   Next, adjust the `sftp-config.js` file to match your server's SFTP connection details. This configuration enables the pipeline to upload your project files to the server.
+
+3. **Configuration:**
+
+   For additional security and to make the SFTP configuration reusable for other Birdhouse projects, move the `sftp-config.js` file to the parent directory of your Birdhouse project. This separation ensures that sensitive information, like server credentials, is not stored within the project directory, reducing the risk of accidental exposure.
 
 Make sure your are in the Birdhouse directory:
 ```bash
@@ -121,9 +145,32 @@ cd Birdhouse
 pipeline.js -p -c -m -v 1.2.3.4
 ```
 
-**Important:** Some files (like `service-worker-js`) are placed within `Birdhouse/root` and will be copied to the root of the project. This will be done automatically on deployment, but can also be triggered with the `-root`-flag.
+**Important:** Some files (like `service-worker.js`) are placed within `Birdhouse/root` and will be copied to the root of the project. This will be done automatically on deployment, but can also be triggered with the `-root`-flag.
 
-### Command Line Options (most can be combined):
+### Utilizing Pre- and Post-Release Scripts
+
+For advanced deployment scenarios, your Birdhouse project might require the execution of additional Node.js scripts either before or after the deployment process. This feature is especially useful for tasks such as database migrations, environment setup, or cleanup operations that need to run in conjunction with your deployment workflow.
+
+To integrate these tasks into your deployment process, you can specify them in the `pipeline-config.js` file within the Birdhouse directory. Add the relative paths to your scripts to the `preReleaseScripts` array for scripts that need to run before deployment, and to the `postReleaseScripts` array for scripts that should run after deployment. This configuration ensures that your scripts are executed automatically at the appropriate time during the deployment to either production or staging environments.
+
+#### Example Configuration
+
+```javascript
+// In pipeline-config.js
+module.exports = {
+  // Other configurations...
+  preReleaseScripts: [
+    'scripts/pre-deploy-script.js'
+  ],
+  postReleaseScripts: [
+    'scripts/post-deploy-script.js'
+  ]
+};
+```
+
+This setup automatically calls `pre-deploy-script.js` (located in the scripts folder of your projects root directory) before initiating the deployment process and `post-deploy-script.js` after the deployment completes successfully. Make sure your scripts are idempotent (i.e., they can run multiple times without causing issues) and have proper error handling to avoid disrupting the deployment process.
+
+### Command Line Options:
 
 - `-help`, `-h` or no flag: Display help message and exit. **(STRONGLY RECOMMENDED to get more detailed and up to date information)**
 - `-update` or `-u`: Updates or creates the config.js and config-pipeline.js with necessary entries, orders them and exits.
