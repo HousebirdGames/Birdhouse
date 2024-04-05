@@ -968,7 +968,9 @@ async function uploadFilesToDirectory(filesToUpload, sftp, applicationPath) {
                     baseTag.setAttribute('href', config.basePath);
                 } else {
                     const head = root.querySelector('head');
-                    head.prepend(`<base href="${config.basePath}">`);
+                    const newBaseTag = document.createElement('base');
+                    newBaseTag.setAttribute('href', config.basePath);
+                    head.prepend(newBaseTag);
                 }
             } else {
                 baseTag && baseTag.remove();
