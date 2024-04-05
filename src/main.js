@@ -499,12 +499,6 @@ let isHandlingRouteChange = false;
 
 let path = normalizePath(window.location.pathname);
 
-let userHasScrolled = false;
-
-window.addEventListener('scroll', () => {
-    userHasScrolled = true;
-});
-
 /**
  * Handles route changes within the application. This function is responsible for updating the
  * application's state based on the new route, including updating the UI, fetching new data, and
@@ -521,7 +515,6 @@ export async function handleRouteChange() {
     }
 
     isHandlingRouteChange = true;
-    userHasScrolled = false;
 
     removeAllComponentCSS();
     unmountActions();
@@ -625,8 +618,6 @@ export async function handleRouteChange() {
                 console.error(error);
                 content.innerHTML = oupsContent;
             }
-
-            scroll();
         }
     }
 
@@ -706,13 +697,9 @@ export async function handleRouteChange() {
         }
     }
 
-    setTimeout(() => {
-        if (userHasScrolled) {
-            return;
-        }
-
+    requestAnimationFrame(() => {
         scroll();
-    }, 500);
+    });
 }
 
 function scroll() {
