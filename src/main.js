@@ -499,6 +499,12 @@ let isHandlingRouteChange = false;
 
 let path = normalizePath(window.location.pathname);
 
+let userHasScrolled = false;
+
+window.addEventListener('scroll', () => {
+    userHasScrolled = true;
+});
+
 /**
  * Handles route changes within the application. This function is responsible for updating the
  * application's state based on the new route, including updating the UI, fetching new data, and
@@ -515,6 +521,7 @@ export async function handleRouteChange() {
     }
 
     isHandlingRouteChange = true;
+    userHasScrolled = false;
 
     removeAllComponentCSS();
     unmountActions();
@@ -699,7 +706,13 @@ export async function handleRouteChange() {
         }
     }
 
-    setTimeout(scroll, 500);
+    setTimeout(() => {
+        if (userHasScrolled) {
+            return;
+        }
+
+        scroll();
+    }, 500);
 }
 
 function scroll() {
@@ -1110,7 +1123,7 @@ export function getRelativePath(path) {
 export async function addAdditionalComponent(componentPath, data = null) {
     const content = document.getElementById("content");
     if (content) {
-        const additionalComponent = await getComponent(componentPath, data).catch((error) => {
+        const additionalComponent = await getComponent(componentPath + '.js', data).catch((error) => {
             console.error(error);
             return 'Failed to load additional component';
         });

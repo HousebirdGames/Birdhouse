@@ -632,7 +632,7 @@ async function compressImages() {
 }
 
 function isImageFile(filename) {
-    const imageExtensions = ['.jpg', '.jpeg', '.png', '.gif'];
+    const imageExtensions = ['.jpg', '.jpeg', '.png'];
     return imageExtensions.includes(path.extname(filename).toLowerCase());
 }
 
