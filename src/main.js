@@ -702,11 +702,25 @@ export async function handleRouteChange() {
     });
 }
 
-function scroll() {
+/**
+ * Scrolls to the element specified by the hash in the URL, or to the top of the page if no hash is provided.
+ * 
+ * 
+ * This function checks the current URL for a hash (#). If a hash is present, it attempts to find an element
+ * with an ID that matches the hash. If such an element is found, the page scrolls smoothly to bring the element
+ * into view. The `anchorScrollOffset` is used to adjust the final scroll position, allowing for fixed elements
+ * like headers.
+ * 
+ * 
+ * If no hash is present in the URL, or if no element with a matching ID is found, the page scrolls to the top.
+ */
+export function scroll() {
     const hash = window.location.hash.substring(1);
+    console.log(hash);
     if (hash != '') {
         const element = document.getElementById(hash);
         if (element) {
+            console.log(element);
             requestAnimationFrame(() => {
                 const newPosition = window.scrollY + element.getBoundingClientRect().top - anchorScrollOffset;
                 window.scrollTo({ top: newPosition, behavior: 'smooth' });
