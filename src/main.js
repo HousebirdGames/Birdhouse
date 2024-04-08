@@ -716,11 +716,9 @@ export async function handleRouteChange() {
  */
 export function scroll() {
     const hash = window.location.hash.substring(1);
-    console.log(hash);
     if (hash != '') {
         const element = document.getElementById(hash);
         if (element) {
-            console.log(element);
             requestAnimationFrame(() => {
                 const newPosition = window.scrollY + element.getBoundingClientRect().top - anchorScrollOffset;
                 window.scrollTo({ top: newPosition, behavior: 'smooth' });
