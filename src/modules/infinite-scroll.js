@@ -28,7 +28,7 @@ integrates with local or session storage for caching purposes.
  * 
  * - storageType: 'local' or 'session' to enable caching. If not provided, caching is disabled.
  * @param {Object} config Configuration object for infinite scroll as defined above.
- * @returns An object containing methods to setup, teardown, handleScroll, and refresh the infinite scroll functionality.
+ * @returns {Object} An object containing methods to setup, teardown, handleScroll, and refresh the infinite scroll functionality.
  */
 export default function InfiniteScroll(config) {
     let initialLimit = config.initialLimit || 3;
