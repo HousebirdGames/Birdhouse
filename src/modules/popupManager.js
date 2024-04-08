@@ -88,8 +88,11 @@ export default class PopupManager {
             popup.classList.add('fade-out-fast');
             setTimeout(() => {
                 popup.style.display = 'none';
+                document.body.classList.remove('body-no-scroll');
             }, 200);
         }
-        document.body.classList.remove('body-no-scroll');
+        else {
+            document.body.classList.remove('body-no-scroll');
+        }
     }
 }

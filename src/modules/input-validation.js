@@ -15,6 +15,9 @@ custom validation logic through the `validate-field` hook or maybe the `validate
  * This function is automatically called if input validation is enabled in the application configuration.
  */
 export function initializeInputValidation() {
+    document.body.addEventListener('click', function (event) {
+        validateInputs(event)
+    });
     document.body.addEventListener('input', function (event) {
         validateInputs(event)
     });
@@ -32,7 +35,7 @@ const debouncedValidateInputServer = debounce(validateInputServer, 2000);
  * @param {Event} event The DOM event triggered by user interaction with input or textarea elements.
  */
 export function validateInputs(event) {
-    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA') {
+    if (event.target.tagName === 'INPUT' || event.target.tagName === 'TEXTAREA' || event.target.tagName === 'SELECT' || event.target.tagName === 'BUTTON') {
         debouncedValidateInputClient(event);
         debouncedValidateInputServer(event);
     }
@@ -46,8 +49,7 @@ async function validateInput(event, serverSide) {
 
     ongoingValidation = (async () => {
         const input = event.target;
-
-        if (input.classList.contains('noValidation') || input.type === 'checkbox' || input.type === 'radio' || input.type === 'submit' || input.type === 'button') {
+        if (input.classList.contains('noValidation')) {
             return;
         }
 
@@ -70,7 +72,7 @@ function addMissingErrorMessage(input) {
         if (label) {
             label.appendChild(errorElement);
         } else {
-            input.parentNode.insertBefore(errorElement, input.nextSibling);
+            return null;
         }
     }
 
@@ -118,6 +120,10 @@ export function displayError(input, errorElement, message = '') {
         errorElement.textContent = message;
         errorElement.style.maxHeight = `${errorElement.scrollHeight}px`;
     }
+    else if (input && !errorElement) {
+        console.warning('errorElement is missing on input element', input);
+        console.error('Error message:', message);
+    }
 }
 
 /**
@@ -127,9 +133,14 @@ export function displayError(input, errorElement, message = '') {
  * @param {HTMLElement} errorElement The DOM element that currently displays the error message.
  */
 export function clearError(input, errorElement) {
-    input.classList.remove('invalid');
-    errorElement = addMissingErrorMessage(input);
-    errorElement.style.maxHeight = '0';
+    if (input) {
+        input.classList.remove('invalid');
+    }
+
+    if (errorElement) {
+        errorElement = addMissingErrorMessage(input);
+        errorElement.style.maxHeight = '0';
+    }
 }
 
 /**
@@ -161,7 +172,8 @@ export async function validateField(input, errorElement, serverSide = true) {
         return;
     }
 
-    const shouldClear = await window.triggerHook('validate-field', input, value, errorElement, serverSide);
+    let shouldClear = await window.triggerHook('validate-field', input, value, errorElement, serverSide);
+    shouldClear = shouldClear === undefined ? true : shouldClear;
 
     if (shouldClear != false) {
         clearError(input, errorElement);
