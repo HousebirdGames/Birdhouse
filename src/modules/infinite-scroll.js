@@ -150,13 +150,13 @@ export default function InfiniteScroll(config) {
 
     let isLoading = false;
     let lastPageLoaded = 0;
-    async function handleScroll() {
+    async function handleScroll(force = false) {
         if (isLoading) return;
 
         const rect = container.getBoundingClientRect();
         const isAtBottom = (rect.bottom <= window.innerHeight + 2000);
 
-        if (isAtBottom && !isLoading && page > lastPageLoaded) {
+        if ((isAtBottom || force) && !isLoading && page > lastPageLoaded) {
             isLoading = true;
             lastPageLoaded = page;
 
