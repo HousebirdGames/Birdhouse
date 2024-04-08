@@ -16,7 +16,7 @@ Access comprehensive Birdhouse documentation at [birdhouse-js.com](https://birdh
 
 For private, local access to the documentation, leverage the [official Birdhouse GitHub repository](https://github.com/HousebirdGames/Birdhouse-Website). Simply clone the repository and deploy it locally, for example, with XAMPP.
 
-Keep up with the latest updates by viewing [the commit history on GitHub](https://github.com/HousebirdGames/Birdhouse/commits/main/).
+Keep up with the latest updates by viewing [the commit history on GitHub](https://github.com/HousebirdGames/Birdhouse/commits/main/) or [the changelog on the documentation website](https://birdhouse-js.com/changelog).
 
 ## Logo and Name Use Guidelines Notice
 

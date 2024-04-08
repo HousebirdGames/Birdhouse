@@ -698,7 +698,9 @@ export async function handleRouteChange() {
     }
 
     requestAnimationFrame(() => {
-        scroll();
+        requestAnimationFrame(() => {
+            scroll();
+        });
     });
 }
 
