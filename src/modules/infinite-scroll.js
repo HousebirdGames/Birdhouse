@@ -1,3 +1,5 @@
+import { resizeTextareaNodes } from '../main.js';
+
 /*
 Implements an infinite scroll mechanism for dynamically loading content as the user scrolls.
 The script supports customizable settings for initial items, incremental load amounts, and
@@ -120,9 +122,16 @@ export default function InfiniteScroll(config) {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = itemsHtml;
 
+            const textareas = [];
+
             while (tempDiv.firstChild) {
-                container.appendChild(tempDiv.firstChild);
+                const child = tempDiv.firstChild;
+                container.appendChild(child);
+
+                child.querySelectorAll('textarea').forEach(textarea => textareas.push(textarea));
             }
+
+            resizeTextareaNodes(textareas);
         }
         else if (container.innerHTML.trim() === '') {
             displayNoItemsMessage();

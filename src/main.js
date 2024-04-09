@@ -735,6 +735,11 @@ export function scroll() {
     }
 }
 
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', (e) => {
+    deferredPrompt = e;
+});
+
 document.addEventListener("DOMContentLoaded", async () => {
     routesArray.push({
         path: '*',
@@ -966,16 +971,11 @@ function addLinkListeners() {
 }
 
 function assignInstallButton() {
-    let deferredPrompt;
-
     const installButton = document.getElementById('installButton');
-
     if (installButton) {
-        window.addEventListener('beforeinstallprompt', (e) => {
-            e.preventDefault();
-            deferredPrompt = e;
+        if (deferredPrompt) {
             installButton.style.display = 'flex';
-        });
+        }
 
         installButton.addEventListener('click', (e) => {
             deferredPrompt.prompt();
@@ -1186,7 +1186,6 @@ export async function getMenuHTML() {
 }
 
 let textareaResizerAdded = false;
-let resizeTimeout;
 
 function textareaResizer() {
     if (!textareaResizerAdded) {
@@ -1204,14 +1203,7 @@ function textareaResizer() {
         textareaResizerAdded = true;
     }
 
-    resizeAllTextareasDelayed();
-
-    function resizeAllTextareasDelayed() {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            resizeAllTextareas();
-        }, 100);
-    }
+    action(resizeAllTextareas);
 
     function delegateResize(event) {
         if (event.target.tagName.toLowerCase() === 'textarea') {
@@ -1237,7 +1229,6 @@ function textareaResizer() {
             window.scrollTo(0, currentPosition);
         });
     }
-
 }
 
 /**
@@ -1248,21 +1239,56 @@ function textareaResizer() {
  * 
  * Is typically called automatically, but can also be triggered manually if needed.
  */
-export function resizeAllTextareas() {
+export async function resizeAllTextareas() {
     const allTextareas = document.querySelectorAll('textarea');
-    const textareas = Array.from(allTextareas);
+    resizeTextareaNodes(allTextareas);
+}
 
-    textareas.forEach(textarea => {
-        textarea.style.height = 'auto';
-    });
+/**
+ * A utility function to dynamically resize a single textarea element. It first resets the textarea's height to 'auto',
+ * then sets it to the scrollHeight of the textarea plus 4 pixels. The scrollHeight is equal to the height of the 
+ * textarea's content. The extra 4 pixels account for the textarea's border.
+ *
+ * @param {HTMLTextAreaElement} textarea The textarea element to resize.
+ */
+export async function resizeTextarea(textarea) {
+    console.log('Resizing textarea');
+    textarea.style.height = 'auto';
+    textarea.style.height = textarea.scrollHeight + 4 + 'px';
+}
 
-    const scrollHeights = textareas.map(textarea => textarea.scrollHeight);
+/**
+ * This function works by converting the provided NodeList of textarea elements into an array to leverage array methods
+ * for iteration. It processes each textarea in batches to minimize reflows and repaints, improving performance especially
+ * when dealing with a large number of textareas.
+ * 
+ * Each textarea's height is initially reset to 'auto' to shrink or expand the textarea based on its content height.
+ * The resizeTextarea function is responsible for the actual resizing logic of each textarea. 
+ * This function uses requestAnimationFrame to schedule the resizing in an efficient way, ensuring smooth animations and minimizing layout thrashing.
+ * 
+ * Example usage:
+ * const textareas = document.querySelectorAll('textarea');
+ * resizeTextareaNodes(textareas);
+ * 
+ * @param {NodeList} nodeList A NodeList of textarea elements to be resized. Typically obtained through document.querySelectorAll or similar methods.
+ */
+export function resizeTextareaNodes(nodeList) {
+    const textareas = Array.from(nodeList);
 
-    window.requestAnimationFrame(() => {
-        textareas.forEach((textarea, index) => {
-            textarea.style.height = scrollHeights[index] + 4 + 'px';
-        });
-    });
+    if (textareas.length === 0) return;
+
+    const resizeBatch = () => {
+        const textarea = textareas.shift();
+        if (textarea) {
+            resizeTextarea(textarea);
+
+            if (textareas.length > 0) {
+                window.requestAnimationFrame(resizeBatch);
+            }
+        }
+    };
+
+    window.requestAnimationFrame(resizeBatch);
 }
 
 /**
