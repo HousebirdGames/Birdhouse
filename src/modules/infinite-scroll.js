@@ -128,7 +128,9 @@ export default function InfiniteScroll(config) {
                 const child = tempDiv.firstChild;
                 container.appendChild(child);
 
-                child.querySelectorAll('textarea').forEach(textarea => textareas.push(textarea));
+                if (child instanceof Element) {
+                    child.querySelectorAll('textarea').forEach(textarea => textareas.push(textarea));
+                }
             }
 
             resizeTextareaNodes(textareas);
