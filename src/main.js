@@ -1252,7 +1252,6 @@ export async function resizeAllTextareas() {
  * @param {HTMLTextAreaElement} textarea The textarea element to resize.
  */
 export async function resizeTextarea(textarea) {
-    console.log('Resizing textarea');
     textarea.style.height = 'auto';
     textarea.style.height = textarea.scrollHeight + 4 + 'px';
 }
@@ -1263,8 +1262,7 @@ export async function resizeTextarea(textarea) {
  * when dealing with a large number of textareas.
  * 
  * Each textarea's height is initially reset to 'auto' to shrink or expand the textarea based on its content height.
- * The resizeTextarea function is responsible for the actual resizing logic of each textarea. 
- * This function uses requestAnimationFrame to schedule the resizing in an efficient way, ensuring smooth animations and minimizing layout thrashing.
+ * The resizeTextarea function is responsible for the actual resizing logic of each textarea.
  * 
  * Example usage:
  * const textareas = document.querySelectorAll('textarea');
@@ -1275,20 +1273,14 @@ export async function resizeTextarea(textarea) {
 export function resizeTextareaNodes(nodeList) {
     const textareas = Array.from(nodeList);
 
-    if (textareas.length === 0) return;
+    const heights = textareas.map(textarea => {
+        textarea.style.height = 'auto';
+        return textarea.scrollHeight + 4;
+    });
 
-    const resizeBatch = () => {
-        const textarea = textareas.shift();
-        if (textarea) {
-            resizeTextarea(textarea);
-
-            if (textareas.length > 0) {
-                window.requestAnimationFrame(resizeBatch);
-            }
-        }
-    };
-
-    window.requestAnimationFrame(resizeBatch);
+    textareas.forEach((textarea, index) => {
+        textarea.style.height = `${heights[index]}px`;
+    });
 }
 
 /**
