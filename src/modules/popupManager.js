@@ -11,7 +11,7 @@ You can import the `popupManager` instance from `main.js` to access the PopupMan
 Use popupManager.openPopup(popupID) to open a popup by its ID and popupManager.closePopup(popupID) to close a popup by its ID.
  */
 
-import { resizeAllTextareas } from "../../../Birdhouse/src/main.js";
+import { resizeTextareaNodes } from "../../../Birdhouse/src/main.js";
 
 /**
  * Manages the display and behavior of popups within the application.
@@ -65,7 +65,8 @@ export default class PopupManager {
             popup.classList.add('fade-in-fast');
             popup.style.display = 'block';
             document.body.classList.add('body-no-scroll');
-            resizeAllTextareas();
+            const textareas = popup.querySelectorAll('textarea');
+            resizeTextareaNodes(textareas);
         }
     }
 

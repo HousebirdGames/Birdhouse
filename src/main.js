@@ -1195,7 +1195,7 @@ function textareaResizer() {
 
         window.addEventListener('resize', () => {
             if (window.innerWidth !== windowWidth) {
-                action(resizeAllTextareas);
+                resizeAllTextareas();
                 windowWidth = window.innerWidth;
             }
         }, { passive: true });
