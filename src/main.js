@@ -1261,8 +1261,10 @@ export async function resizeTextarea(textarea) {
  * for iteration. It processes each textarea in batches to minimize reflows and repaints, improving performance especially
  * when dealing with a large number of textareas.
  * 
+ * 
  * Each textarea's height is initially reset to 'auto' to shrink or expand the textarea based on its content height.
  * The resizeTextarea function is responsible for the actual resizing logic of each textarea.
+ * 
  * 
  * Example usage:
  * const textareas = document.querySelectorAll('textarea');
