@@ -121,7 +121,7 @@ export function displayError(input, errorElement, message = '') {
         errorElement.style.maxHeight = `${errorElement.scrollHeight}px`;
     }
     else if (input && !errorElement) {
-        console.warning('errorElement is missing on input element', input);
+        console.warn('errorElement is missing on input element', input);
         console.error('Error message:', message);
     }
 }

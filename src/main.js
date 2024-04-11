@@ -253,9 +253,14 @@ export function sanitizeIdentifier(identifier) {
  * @param {boolean} displayFull Whether to display the route with text in navigation contexts.
  * @param {boolean} dynamic Whether the route is dynamically generated.
  */
-export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+export async function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
     const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
-        () => isAdminPromise ? Promise.resolve() : Promise.reject('Not authorized to access this page'),
+        async () => await isAdminPromise ? Promise.resolve() : `
+            <div class="contentBox accent center fitContent"><h2>You are not authorized to access this page</h2>
+            <div class="linkRow">
+            <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
+            <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
+            </div></div>`,
         `${componentPath}.css`);
     routesArray.push(route);
 }
@@ -273,9 +278,9 @@ export function createAdminRoute(slug, name, materialIcon, componentPath, inMenu
  * @param {boolean} displayFull Whether to display the route with text in navigation contexts.
  * @param {boolean} dynamic Whether the route is dynamically generated.
  */
-export function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+export async function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
     const route = constructRoute('user', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
-        () => isUserPromise ? Promise.resolve() : `
+        async () => await isUserPromise ? Promise.resolve() : `
             <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
             <div class="linkRow">
             <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
@@ -697,6 +702,8 @@ export async function handleRouteChange() {
         }
     }
 
+    assignInstallButton();
+
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
             scroll();
@@ -735,9 +742,10 @@ export function scroll() {
     }
 }
 
-let deferredPrompt;
+let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
+    assignInstallButton();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -835,7 +843,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await window.triggerHook('after-adding-base-content', menuHTML);
 
     assignMenuButton();
-    assignInstallButton();
 
     const clearButton = document.getElementById("clearButton");
     if (clearButton) {
@@ -971,15 +978,19 @@ function addLinkListeners() {
 }
 
 function assignInstallButton() {
+    if (deferredPrompt == null) {
+        return;
+    }
+
     const installButton = document.getElementById('installButton');
     if (installButton) {
-        if (deferredPrompt) {
-            installButton.style.display = 'flex';
-        }
+        const installPrompt = deferredPrompt;
+        deferredPrompt = null;
+        installButton.style.display = 'flex';
 
         installButton.addEventListener('click', (e) => {
-            deferredPrompt.prompt();
-            deferredPrompt.userChoice.then((choiceResult) => {
+            installPrompt.prompt();
+            installPrompt.userChoice.then((choiceResult) => {
                 if (choiceResult.outcome === 'accepted') {
                     alertPopup(`Thank you for installing ${config.pageTitle} on your device`)
                     Analytics('Installed PWA');
@@ -993,7 +1004,7 @@ function assignInstallButton() {
         window.addEventListener('appinstalled', () => {
             console.log("App installed");
             installButton.style.display = 'none';
-            deferredPrompt = null;
+            installPrompt = null;
         });
     }
 }
@@ -1094,8 +1105,9 @@ export function normalizePath(path) {
     }
 
     for (const excludedPath of excludedPaths) {
-        if (normalizedPath === excludedPath.toLowerCase() || normalizedPath === excludedPath.toLowerCase() + '/') {
-            window.location.href = excludedPath;
+        const excludedPathWithPrefix = urlPrefix + excludedPath;
+        if (normalizedPath === excludedPathWithPrefix.toLowerCase() || normalizedPath === excludedPathWithPrefix.toLowerCase() + '/') {
+            window.location.href = excludedPathWithPrefix;
             return;
         }
     }
@@ -1262,8 +1274,7 @@ export async function resizeTextarea(textarea) {
  * when dealing with a large number of textareas.
  * 
  * 
- * Each textarea's height is initially reset to 'auto' to shrink or expand the textarea based on its content height.
- * The resizeTextarea function is responsible for the actual resizing logic of each textarea.
+ * Each textarea's height is retrieved by using the getTextareaHeight function.
  * 
  * 
  * Example usage:
@@ -1276,13 +1287,41 @@ export function resizeTextareaNodes(nodeList) {
     const textareas = Array.from(nodeList);
 
     const heights = textareas.map(textarea => {
-        textarea.style.height = 'auto';
-        return textarea.scrollHeight + 4;
+        return getTextareaHeight(textarea) + 4;
     });
 
-    textareas.forEach((textarea, index) => {
-        textarea.style.height = `${heights[index]}px`;
+    window.requestAnimationFrame(() => {
+        textareas.forEach((textarea, index) => {
+            textarea.style.height = `${heights[index]}px`;
+        });
     });
+}
+
+/**
+ * Calculates the content height of a textarea element without altering its visible state or layout.
+ * This function creates an off-screen clone of the provided textarea, applies relevant styles, and
+ * measures its scrollHeight to determine the content height. This method avoids causing reflows for
+ * the original textarea element, improving performance in scenarios where reflow cost is a concern.
+ *
+ * @param {HTMLTextAreaElement} textarea The textarea element for which to calculate content height.
+ * @returns {number} The calculated height of the textarea content, in pixels.
+ */
+export function getTextareaHeight(textarea) {
+    const clone = textarea.cloneNode();
+    clone.style.position = 'absolute';
+    clone.style.visibility = 'hidden';
+    clone.style.height = 'auto';
+
+    clone.style.width = getComputedStyle(textarea).width;
+    clone.textContent = textarea.value;
+
+    document.body.appendChild(clone);
+
+    const contentHeight = clone.scrollHeight;
+
+    document.body.removeChild(clone);
+
+    return contentHeight;
 }
 
 /**
