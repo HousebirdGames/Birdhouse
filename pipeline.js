@@ -871,7 +871,7 @@ async function uploadFilesToServer(filesToCache, applicationPath) {
     let filesToUpload = [...filesToCache, './Birdhouse/filesToCache.js'];
 
     if (databaseDir) {
-        await readFilesFromDirectory(databaseDir, filesToCache);
+        await readFilesFromDirectory(databaseDir, filesToUpload);
     }
 
     //service worker is uploaded last to not trigger recaching on clients before all files are uploaded
