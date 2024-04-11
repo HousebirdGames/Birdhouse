@@ -116,8 +116,8 @@ function replaceComplexPatterns(html) {
         return `
             <div class="image-spliter"${formatAttributes(clazz, id)}>
                 <div class="mover"></div>
-                <img class="img-left" src="${src1}" alt="Image 1" loading="lazy">
-                <img class="img-right" src="${src2}" alt="Image 2" loading="lazy">
+                <img class="img-left" src="uploads/${src1}" alt="Image 1" loading="lazy">
+                <img class="img-right" src="uploads/${src2}" alt="Image 2" loading="lazy">
             </div>
         `;
     });
