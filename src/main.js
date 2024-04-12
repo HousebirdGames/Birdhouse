@@ -244,6 +244,10 @@ export function sanitizeIdentifier(identifier) {
  * Creates an admin route for the application. This function is essential for dynamically
  * adding admin interfaces and ensuring that they are visible only to users with the appropriate permissions.
  *
+ * 
+ * If the user is not logged in as admin, the page content is replaced with default content that prompts the user to log in.
+ * This behavior can be customized by using the `overwrite-not-authorized-admin-page-content` hook.
+ * 
  * @param {string} slug The URL slug for the route.
  * @param {string} name The display name for the route.
  * @param {string} materialIcon The Material icon identifier for the route.
@@ -254,13 +258,18 @@ export function sanitizeIdentifier(identifier) {
  * @param {boolean} dynamic Whether the route is dynamically generated.
  */
 export async function createAdminRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+    let overwrittenNotAuthorizedPageContent = await triggerHook('overwrite-not-authorized-admin-page-content');
+    if (overwrittenNotAuthorizedPageContent == null) {
+        overwrittenNotAuthorizedPageContent = `
+                <div class="contentBox accent center fitContent"><h2>You are not authorized to access this page</h2>
+                <div class="linkRow">
+                <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
+                <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
+                </div></div>`;
+    }
+
     const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
-        async () => await isAdminPromise ? Promise.resolve() : `
-            <div class="contentBox accent center fitContent"><h2>You are not authorized to access this page</h2>
-            <div class="linkRow">
-            <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
-            <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
-            </div></div>`,
+        async () => await isAdminPromise ? Promise.resolve() : overwrittenNotAuthorizedPageContent,
         `${componentPath}.css`);
     routesArray.push(route);
 }
@@ -268,6 +277,10 @@ export async function createAdminRoute(slug, name, materialIcon, componentPath, 
 /**
  * Creates a user route, visible to logged-in users. This function enables the dynamic addition
  * of user-specific pages.
+ * 
+ * 
+ * If the user is not logged in, the page content is replaced with default content that prompts the user to log in.
+ * This behavior can be customized by using the `overwrite-not-authorized-user-page-content` hook.
  *
  * @param {string} slug The URL slug for the route.
  * @param {string} name The display name for the route.
@@ -279,13 +292,18 @@ export async function createAdminRoute(slug, name, materialIcon, componentPath, 
  * @param {boolean} dynamic Whether the route is dynamically generated.
  */
 export async function createUserRoute(slug, name, materialIcon, componentPath, inMenu = true, data = null, displayFull = true, dynamic = false) {
+    let overwrittenNotAuthorizedPageContent = await triggerHook('overwrite-not-authorized-user-page-content');
+    if (overwrittenNotAuthorizedPageContent == null) {
+        overwrittenNotAuthorizedPageContent = `
+        <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
+        <div class="linkRow">
+        <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
+        <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
+        </div></div>`;
+    }
+
     const route = constructRoute('user', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
-        async () => await isUserPromise ? Promise.resolve() : `
-            <div class="contentBox accent center fitContent"><h2>Only logged in users can see this page</h2>
-            <div class="linkRow">
-            <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
-            <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
-            </div></div>`,
+        async () => await isUserPromise ? Promise.resolve() : overwrittenNotAuthorizedPageContent,
         '');
     routesArray.push(route);
 }
@@ -1201,8 +1219,19 @@ let textareaResizerAdded = false;
 
 function textareaResizer() {
     if (!textareaResizerAdded) {
-        document.body.addEventListener('input', delegateResize);
-        document.body.addEventListener('click', delegateResize);
+        action({
+            type: 'input',
+            handler: delegateResize,
+            selector: 'textarea',
+            debounce: 0,
+        });
+        action({
+            type: 'click',
+            handler: delegateResize,
+            selector: 'textarea',
+            debounce: 0,
+        });
+
         let windowWidth = window.innerWidth;
 
         window.addEventListener('resize', () => {
@@ -1218,19 +1247,14 @@ function textareaResizer() {
     action(resizeAllTextareas);
 
     function delegateResize(event) {
-        if (event.target.tagName.toLowerCase() === 'textarea') {
-            requestAnimationFrame(() => {
-                event.target.scrollTop = 0;
-            });
-            debounce(resizeOne.bind(event.target), 0)();
-        }
+        requestAnimationFrame(() => { event.target.scrollTop = 0; });
+        debounce(resizeOne.bind(event.target), 0)();
     }
 
     function resizeOne() {
         const currentPosition = window.scrollY;
         const currentHeight = this.style.height;
-        this.style.height = 'auto';
-        const newHeight = this.scrollHeight + 4 + 'px';
+        const newHeight = getTextareaHeight(this) + 4 + 'px';
 
         this.style.height = currentHeight;
         this.scrollTop = 0;
@@ -1250,10 +1274,36 @@ function textareaResizer() {
  * 
  * 
  * Is typically called automatically, but can also be triggered manually if needed.
+ * 
+ * 
+ * This function supports batching which can help in improving performance on pages with a large number
+ * of textareas by spreading out the resize operations over multiple animation frames with a delay of
+ * 100ms between each batch. This can help prevent the browser from becoming unresponsive when resizing.
+ *
+ * @param {number|null} batchSize The number of textareas to process in each batch (needs to be greater than 0). If null, all textareas are resized in a single batch.
  */
-export async function resizeAllTextareas() {
+export async function resizeAllTextareas(batchSize = null) {
     const allTextareas = document.querySelectorAll('textarea');
-    resizeTextareaNodes(allTextareas);
+    if (batchSize == null) {
+        requestAnimationFrame(() => {
+            resizeTextareaNodes(allTextareas);
+        });
+    }
+    else if (batchSize > 0 && typeof batchSize === 'number' && Number.isInteger(batchSize)) {
+        const textareas = Array.from(allTextareas);
+
+        for (let i = 0; i < textareas.length; i += batchSize) {
+            const batch = textareas.slice(i, i + batchSize);
+            requestAnimationFrame(() => {
+                resizeTextareaNodes(batch);
+            });
+
+            await new Promise(resolve => setTimeout(resolve, 100));
+        }
+    }
+    else {
+        console.error('Invalid batch size: Must be a positive integer that greater than 0');
+    }
 }
 
 /**

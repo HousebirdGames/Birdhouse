@@ -90,6 +90,18 @@ window.hook('overwrite-default-base-content', async function () {
     // This will prevent the get-storage-acknowledgement-popup-content hook from being triggered.
 });
 
+window.hook('overwrite-not-authorized-user-page-content', async function () {
+    // With this hook you can overwrite the default not authorized user page content.
+    // This content will be loaded like a component instead of the actual component, if the user is not logged in as a user.
+    // You can return HTML as a string.
+});
+
+window.hook('overwrite-not-authorized-user-page-content', async function () {
+    // With this hook you can overwrite the default not authorized admin page content.
+    // This content will be loaded like a component instead of the actual component, if the user is not logged in as an admin.
+    // You can return HTML as a string.
+});
+
 window.hook('overwrite-404-content', async function () {
     // With this hook you can overwrite the default 404 component content.
     // You can return HTML as a string.
