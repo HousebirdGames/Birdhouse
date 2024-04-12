@@ -1280,7 +1280,7 @@ function textareaResizer() {
  * of textareas by spreading out the resize operations over multiple animation frames with a delay of
  * 100ms between each batch. This can help prevent the browser from becoming unresponsive when resizing.
  *
- * @param {number|null} batchSize The number of textareas to process in each batch (needs to be greater than 0). If null, all textareas are resized in a single batch.
+ * @param {number|null} batchSize=null The number of textareas to process in each batch (needs to be greater than 0). If null, all textareas are resized in a single batch.
  */
 export async function resizeAllTextareas(batchSize = null) {
     const allTextareas = document.querySelectorAll('textarea');
