@@ -206,21 +206,21 @@ window.hook('create-routes', async function () {
     // You can even overwrite routes. So if you create a route with the same path, the previously defined route will be overwritten.
 
     // The most common route is the public route, which is accessible by everyone.
-    main.createPublicRoute('/example', 'Example Page', 'article', 'components/example.js', true, 'example-page');
-    main.createPublicRoute('/example-inputs', 'Example Inputs', 'input', 'components/example-inputs.js', true);
+    main.createPublicRoute('/example', 'Example Page', 'article', 'components/example', true, 'example-page');
+    main.createPublicRoute('/example-inputs', 'Example Inputs', 'input', 'components/example-inputs', true);
 
     // As we want something to view on our front page, let's reuse the example component, but not add it to the menu.
-    main.createPublicRoute('/', 'Example Page', 'article', 'components/example.js', false, 'front-page');
-    main.createPublicRoute('/index.html', 'Example Page', 'article', 'components/example.js', false, 'front-page');
+    main.createPublicRoute('/', 'Example Page', 'article', 'components/example', false, 'front-page');
+    main.createPublicRoute('/index.html', 'Example Page', 'article', 'components/example', false, 'front-page');
 
     // We can also use the same component for different routes. But this time without an icon.
-    main.createPublicRoute('/example-2', 'Also the Example Page', '', 'components/example.js', true);
+    main.createPublicRoute('/example-2', 'Also the Example Page', '', 'components/example', true);
 
     // The user route is only accessible by logged in users.
-    main.createUserRoute('/example-for-users', 'Example Page for Users', 'account_circle', 'components/example.js', true);
+    main.createUserRoute('/example-for-users', 'Example Page for Users', 'account_circle', 'components/example', true);
 
     // The admin route is only accessible by logged in admins.
-    main.createAdminRoute('/example-for-users', 'Example Page for Admins', 'admin_panel_settings', 'components/example.js', true);
+    main.createAdminRoute('/example-for-users', 'Example Page for Admins', 'admin_panel_settings', 'components/example', true);
 });
 
 /**
@@ -398,7 +398,7 @@ window.hook('get-maintenance-mode', async function () {
 window.hook('add-dynamic-routes', async function (path) {
     // In this example, we add a dynamic route with the example component.
     if (path === '/dynamic-route') {
-        main.createPublicRoute('/dynamic-route', 'Dynamic Route', '', 'components/example.js', false, 'dynamic-route');
+        main.createPublicRoute('/dynamic-route', 'Dynamic Route', '', 'components/example', false, 'dynamic-route');
         return true;
     }
 
