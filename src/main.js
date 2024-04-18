@@ -382,6 +382,36 @@ async function fetchUserData() {
 }
 
 /**
+ * Fetches data from a specified URL using a GET request.
+ * 
+ * 
+ * Throws an error if the network response was not ok or if the fetch operation fails.
+ * @param {string} url The URL to fetch data from.
+ * @param {string} cacheSetting='default' The cache mode to use for the request (default, no-store, reload, no-cache, force-cache, or only-if-cached).
+ * @returns {Promise<Object>} A promise that resolves to the JSON response.
+ */
+export async function fetchData(url, cacheSetting = 'default') {
+    const fetchOptions = {
+        method: 'GET',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        cache: cacheSetting
+    };
+
+    try {
+        const response = await fetch(url, fetchOptions);
+        if (!response.ok) {
+            throw new Error('Network response was not ok');
+        }
+        return await response.json();
+    } catch (error) {
+        console.error('Failed to fetch data:', error);
+        throw error;
+    }
+}
+
+/**
  * Triggers the check-remember-me hook to determine if there is a valid remember-me token stored.
  * If the hook returns true, the page is reloaded to log in the user automatically.
  * 
@@ -573,7 +603,7 @@ export async function handleRouteChange() {
 
     content.classList.remove('fade-in-fast');
 
-    content.innerHTML = await window.triggerHook('get-loading-content');
+    content.innerHTML = await window.triggerHook('get-loading-content') || 'Loading...';
 
     path = normalizePath(window.location.pathname);
 
@@ -596,7 +626,7 @@ export async function handleRouteChange() {
         let route = findRoute(path);
 
         if (!route) {
-            dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase());
+            dynamicRoute = await window.triggerHook('add-dynamic-routes', path.slice(urlPrefix.length + 1).toLowerCase()) || false;
 
             if (!route) {
                 route = findRoute(path);

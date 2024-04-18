@@ -85,7 +85,10 @@ function formatAttributes(clazz, id) {
  * @returns {string} The HTML string with markdown patterns replaced.
  */
 async function applyPatternReplacements(html) {
-    html = await window.triggerHook('add-markdown-patterns', html);
+    const customHTML = await window.triggerHook('add-markdown-patterns', html);
+    if (customHTML) {
+        html = customHTML;
+    }
     html = html.replace(boldPattern, (match, clazz, id, content) => `<strong${formatAttributes(clazz, id)}>${content}</strong>`);
     html = html.replace(italicPattern, (match, clazz, id, content) => `<em${formatAttributes(clazz, id)}>${content}</em>`);
     html = html.replace(underlinePattern, (match, clazz, id, content) => `<u${formatAttributes(clazz, id)}>${content}</u>`);
