@@ -1032,19 +1032,29 @@ function assignInstallButton() {
 
     const installButton = document.getElementById('installButton');
     if (installButton) {
-        const installPrompt = deferredPrompt;
-        deferredPrompt = null;
+        let installPrompt = deferredPrompt;
         installButton.style.display = 'flex';
 
-        installButton.addEventListener('click', (e) => {
-            installPrompt.prompt();
-            installPrompt.userChoice.then((choiceResult) => {
-                if (choiceResult.outcome === 'accepted') {
-                    alertPopup(`Thank you for installing ${config.pageTitle} on your device`)
-                    Analytics('Installed PWA');
-                }
-            });
-        });
+        function handleInstallButtonClick(e) {
+            if (installPrompt) {
+                installPrompt.prompt();
+                installPrompt.userChoice.then((choiceResult) => {
+                    if (choiceResult.outcome === 'accepted') {
+                        //console.log('User accepted the install prompt');
+                        alertPopup(`Thank you for installing ${config.pageTitle} on your device`);
+                        Analytics('Installed PWA');
+                    } else {
+                        //console.log('User dismissed the install prompt');
+                        const installButton = document.getElementById('installButton');
+                        installButton.addEventListener('click', handleInstallButtonClick, { once: true });
+                    }
+                    installPrompt = null;
+                });
+            }
+        }
+
+        installButton.addEventListener('click', handleInstallButtonClick);
+
         installButton.addEventListener('animationend', () => {
             installButton.style.animation = '';
         });
