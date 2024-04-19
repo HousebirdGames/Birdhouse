@@ -147,7 +147,7 @@ window.hook('overwrite-not-authorized-user-page-content', async function () {
  * This content will be loaded like a component instead of the actual component, if the user is not logged in as an admin.
  * @shouldReturn HTML as a string or nothing
  */
-window.hook('overwrite-not-authorized-user-page-content', async function () {
+window.hook('overwrite-not-authorized-admin-page-content', async function () {
 });
 
 /**
