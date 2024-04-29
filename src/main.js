@@ -603,7 +603,10 @@ export async function handleRouteChange() {
 
     content.classList.remove('fade-in-fast');
 
-    content.innerHTML = await window.triggerHook('get-loading-content') || 'Loading...';
+    const loadingContent = await window.triggerHook('get-loading-content');
+    if (loadingContent != false) {
+        content.innerHTML = loadingContent || 'Loading...';
+    }
 
     path = normalizePath(window.location.pathname);
 

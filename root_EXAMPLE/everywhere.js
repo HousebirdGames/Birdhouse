@@ -493,7 +493,10 @@ window.hook('validate-field', async function (input, value, errorElement, server
 
 /**
  * This hook is used to set the content that is displayed while the current component is loading.
- * @shouldReturn HTML as a string or nothing
+ * 
+ * 
+ * If you return false, the page content will not be cleared while the component is loading.
+ * @shouldReturn HTML as a string or false
  */
 window.hook('get-loading-content', async function () {
     //This will be in the content section until the current component is loaded. You can place skeleton loaders or a loading symbol here or just return an empty string.
