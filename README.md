@@ -179,11 +179,11 @@ This setup automatically calls `pre-deploy-script.js` (located in the scripts fo
 - `-root` or `-r`: Copies all files from /Birdhouse/root to the root directory and exits.
 - `-production` or `-p`: Release to the production environment.
 - `-staging` or `-s`: Release to the staging environment.
-- `-local` or `-l`: Builds the project to the local dist directory and therefore skips the upload to the server (so -p and -s are ignored).
+- `-local` or `-l`: Builds the project to the local dist directory and thereby skips the upload to the server (so -p and -s are ignored).
 - `-version` or `-v`: Update the version of the `service-worker.js`.
 - `-cache` or `-c`: (Re-)Generate the `filesToCache.js` file.
 - `-minify` or `-m`: Minifies the files in filesToCache.js (before uploading them to the server; if not set, the original files will be uploaded).
-- `-delete` or `-d`: Delete the application directory (production or staging) from the server.
+- `-delete` or `-d`: Delete the application directory (production, staging or local) from the server.
 - `-backup` or `-b`: Creates a backup before deploying the new version that can be rolled back to.
 - `-rollback` or `-r`: Rollback to the backup version of either staging (`-s`) or production (`-p`), when available on the server.
 - `-info` or `-i`: Display detailed information about the process.

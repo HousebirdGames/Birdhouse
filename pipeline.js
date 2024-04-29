@@ -120,14 +120,14 @@ function help() {
         -h, -help or [no flag]  Display this help message and exit
         -i, -info               Display detailed information about the process
         -c, -cache              (Re-)Generates the filesToCache.js file
-        -d, -delete <-p|-s|-l>  Deletes the application production or staging directory from the server
+        -d, -delete <-p|-s|-l>  Deletes the application production or staging directory from the server or clears the local dist directory
         -b, -backup             Creates a backup before deploying the new version that can be rolled back to.
         -r, -rollback           Rollback to the backup version, if on server (used with -p or -s)
         -nl,-nolog              No statistics logged and added to the log file
         -m, -minify             Minifies the files in filesToCache.js (before uploading them to the server)
         -p, -production         Release to production
         -s, -staging            Release to staging (is ignored if -p is set)
-        -l, -local              Builds the project to the local dist directory and therefore skips the upload to the server (so -p and -s are ignored)
+        -l, -local              Builds the project to the local dist directory and thereby skips the upload to the server (so -p and -s are ignored)
         -su,-skipCompU          Skips image compression and upload of the compressed folder
         -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
         -gi,-genicons           Creates icons of all sizes from the original icon and exits
