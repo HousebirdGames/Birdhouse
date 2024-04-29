@@ -23,6 +23,9 @@ process.chdir('..');
 
 const startTime = new Date();
 
+console.log('');
+console.log('Started Pipeline in ' + process.cwd());
+
 const fs = require('fs');
 const { promises: fsPromises, statSync } = require('fs');
 const path = require('path');
@@ -64,6 +67,7 @@ const defaultPipelineConfig = {
     sftpConfigFile: '../sftp-config.js',
     productionPath: 'my_app_production',
     stagingPath: 'my_app_staging',
+    distPath: 'Birdhouse/dist',
     htaccessFile: 'UPLOAD-THIS.htaccess',
     basePath: '/',
     databaseDir: 'database',
@@ -86,21 +90,79 @@ const defaultPipelineConfig = {
 };
 
 const initializeFlag = process.argv.includes('-init') || process.argv.includes('-initialize');
+const updateFlag = process.argv.includes('-update') || process.argv.includes('-u');
+const updateRootFlag = process.argv.includes('-root') || process.argv.includes('-r');
+const productionFlag = process.argv.includes('-production') || process.argv.includes('-p');
+const stagingFlag = process.argv.includes('-staging') || process.argv.includes('-s');
+const cacheFlag = process.argv.includes('-cache') || process.argv.includes('-c');
+const rollbackFlag = process.argv.includes('-rollback') || process.argv.includes('-r');
+const backupFlag = process.argv.includes('-backup') || process.argv.includes('-b');
+const deleteFlag = process.argv.includes('-delete') || process.argv.includes('-d');
+const versionFlagIndex = process.argv.findIndex(arg => arg === '-version' || arg === '-v');
+const helpFlag = process.argv.includes('-help') || process.argv.includes('-h');
+const infoFlag = process.argv.includes('-info') || process.argv.includes('-i');
+const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m');
+const skipCompressedUploadFlag = process.argv.includes('-skipCompU') || process.argv.includes('-su');
+const disableStatisticsFlag = process.argv.includes('-nolog') || process.argv.includes('-nl');
+const generateFaviconsFlag = process.argv.includes('-genfavicons') || process.argv.includes('-gf');
+const generateIconsFlag = process.argv.includes('-genicons') || process.argv.includes('-gi');
+const localFlag = process.argv.includes('-l') || process.argv.includes('-local');
+
+function help() {
+    if (helpFlag || process.argv.length === 2) {
+        console.log(`        Usage: node pipeline.js [options]
+        
+        Options:
+        -u, -update             Updates or creates the config.js and config-pipeline.js with necessary entries, orders them and exits
+        -r, -root               Copies all files from /Birdhouse/root to the root directory and exits
+        -v, -version <version>  Set the version number. Expected format is x, x.x, x.x.x, or x.x.x.x
+        -v, -version            Increment the last part of the version number by 1
+        -h, -help or [no flag]  Display this help message and exit
+        -i, -info               Display detailed information about the process
+        -c, -cache              (Re-)Generates the filesToCache.js file
+        -d, -delete <-p|-s|-l>  Deletes the application production or staging directory from the server
+        -b, -backup             Creates a backup before deploying the new version that can be rolled back to.
+        -r, -rollback           Rollback to the backup version, if on server (used with -p or -s)
+        -nl,-nolog              No statistics logged and added to the log file
+        -m, -minify             Minifies the files in filesToCache.js (before uploading them to the server)
+        -p, -production         Release to production
+        -s, -staging            Release to staging (is ignored if -p is set)
+        -l, -local              Builds the project to the local dist directory and therefore skips the upload to the server (so -p and -s are ignored)
+        -su,-skipCompU          Skips image compression and upload of the compressed folder
+        -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
+        -gi,-genicons           Creates icons of all sizes from the original icon and exits
+        
+        Note: The database folder is uploaded, but not added to the cached files.
+        `);
+        process.exit(0);
+    }
+}
+
 let config = defaultPipelineConfig;
 let sftpConfigFile = null;
 if (!initializeFlag) {
-    config = require('../pipeline-config.js');
 
-    if (!config) {
-        console.log(chalk.red('The pipeline-config.js not found. It should be in the root directory of the project. Use the "-update" flag to create it.'));
+    try {
+        config = require('../pipeline-config.js');
+    } catch (error) {
+        console.log(chalk.red(`Error loading pipeline - config.js: ${error.message}`));
         process.exit(1);
     }
 
-    const sftpConfigFilePath = '../' + (config.sftpConfigFile ? config.sftpConfigFile : '../sftp-config.js');
-    sftpConfigFile = require(sftpConfigFilePath);
-    if (!sftpConfigFile) {
-        console.log(chalk.red('The sftp-config.js not found. By default it should be placed in the parent directory of the project. Use the "-root" flag to copy an example file to the root of your project.'));
-        process.exit(1);
+    if (!localFlag) {
+        const sftpConfigFilePath = '../' + (config.sftpConfigFile ? config.sftpConfigFile : '../sftp-config.js');
+        try {
+            sftpConfigFile = require(sftpConfigFilePath);
+        } catch (error) {
+            console.log(chalk.red(`Error loading sftp config file(${sftpConfigFilePath}): ${error.message}`));
+            process.exit(1);
+        }
+    }
+}
+
+async function importChalk() {
+    if (!chalk) {
+        chalk = (await import('chalk')).default;
     }
 }
 
@@ -111,7 +173,8 @@ const applicationPaths = {
     production: config.productionPath,
     staging: config.stagingPath
 };
-const sftpConfig = {
+
+const sftpConfig = localFlag ? null : {
     host: sftpConfigFile ? sftpConfigFile.sftpHost : 'localhost',
     port: sftpConfigFile ? sftpConfigFile.sftpPort : 22,
     username: sftpConfigFile ? sftpConfigFile.sftpUsername : 'anonymous',
@@ -133,61 +196,21 @@ const manifestIconPath = config.manifestIconPath;
 const manifestIconOutputDir = config.manifestIconOutputDir;
 const manifestIconSizes = config.faviconSizes.length > 0 ? config.faviconSizes : [48, 72, 464, 3000];
 
-const updateFlag = process.argv.includes('-update') || process.argv.includes('-u');
-const updateRootFlag = process.argv.includes('-root') || process.argv.includes('-r');
-const productionFlag = process.argv.includes('-production') || process.argv.includes('-p');
-const stagingFlag = process.argv.includes('-staging') || process.argv.includes('-s');
-const cacheFlag = process.argv.includes('-cache') || process.argv.includes('-c');
-const rollbackFlag = process.argv.includes('-rollback') || process.argv.includes('-r');
-const backupFlag = process.argv.includes('-backup') || process.argv.includes('-b');
-const deleteFlag = process.argv.includes('-delete') || process.argv.includes('-d');
-const versionFlagIndex = process.argv.findIndex(arg => arg === '-version' || arg === '-v');
-const helpFlag = process.argv.includes('-help') || process.argv.includes('-h');
-const infoFlag = process.argv.includes('-info') || process.argv.includes('-i');
-const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m');
-const skipCompressedUploadFlag = process.argv.includes('-skipCompU') || process.argv.includes('-su');
-const disableStatisticsFlag = process.argv.includes('-nolog') || process.argv.includes('-nl');
-const generateFaviconsFlag = process.argv.includes('-genfavicons') || process.argv.includes('-gf');
-const generateIconsFlag = process.argv.includes('-genicons') || process.argv.includes('-gi');
 const fileTypeCounts = {};
 let fileTypeSizes = {};
 
-function help() {
-    if (helpFlag || process.argv.length === 2) {
-        console.log(`        Usage: node pipeline.js [options]
-
-        The database folder is uploaded, but not added to the cached files.
-    
-        Options:
-        -u, -update             Updates or creates the config.js and config-pipeline.js with necessary entries, orders them and exits
-        -r, -root               Copies all files from /Birdhouse/root to the root directory and exits
-        -v, -version <version>  Set the version number. Expected format is x, x.x, x.x.x, or x.x.x.x
-        -v, -version            Increment the last part of the version number by 1
-        -h, -help or [no flag]  Display this help message and exit
-        -i, -info               Display detailed information about the process
-        -c, -cache              (Re-)Generates the filesToCache.js file
-        -d, -delete <-p|-s>     Deletes the application production or staging directory from the server
-        -b, -backup             Creates a backup before deploying the new version that can be rolled back to.
-        -r, -rollback           Rollback to the backup version, if on server (used with -p or -s)
-        -nl,-nolog              No statistics logged and added to the log file
-        -m, -minify             Minifies the files in filesToCache.js (before uploading them to the server)
-        -p, -production         Release to production
-        -s, -staging            Release to staging (is ignored if -p is set)
-        -su,-skipCompU          Skips image compression and upload of the compressed folder
-        -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
-        -gi,-genicons           Creates icons of all sizes from the original icon and exits
-        `);
-        process.exit(0);
-    }
-}
-
 async function main() {
-    chalk = (await import('chalk')).default;
-    console.log(chalk.green('Started Pipeline in ' + process.cwd()));
+    await importChalk();
 
     help();
 
     console.log('');
+
+    if (initializeFlag) {
+        console.log(chalk.green('Initializing project in ' + process.cwd()));
+        await initializeProject();
+        process.exit(0);
+    }
 
     if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && config.preReleaseScripts.length > 0) {
         await runScriptsSequentially(config.preReleaseScripts)
@@ -196,11 +219,6 @@ async function main() {
                 console.log('');
             })
             .catch(error => console.error('An error occurred during pre release script execution:', error));
-    }
-
-    if (initializeFlag) {
-        await initializeProject();
-        process.exit(0);
     }
 
     if (updateFlag) {
@@ -230,21 +248,29 @@ async function main() {
     if (!config.directoriesToInclude) missingConfigs.push('directoriesToInclude');
     if (!config.productionPath) missingConfigs.push('productionPath');
     if (!config.stagingPath) missingConfigs.push('stagingPath');
-    if (!sftpConfigFile.sftpHost) missingConfigs.push('sftpHost');
-    if (!sftpConfigFile.sftpPort) missingConfigs.push('sftpPort');
-    if (!sftpConfigFile.sftpUsername) missingConfigs.push('sftpUsername');
-    if (!sftpConfigFile.sftpPassword) missingConfigs.push('sftpPassword');
 
-    if (missingConfigs.length > 0) {
-        console.error('Error: Missing necessary configuration values in sftp-config.js:', missingConfigs.join(', '));
+    if (sftpConfigFile) {
+        if (!sftpConfigFile.sftpHost) missingConfigs.push('sftpHost');
+        if (!sftpConfigFile.sftpPort) missingConfigs.push('sftpPort');
+        if (!sftpConfigFile.sftpUsername) missingConfigs.push('sftpUsername');
+        if (!sftpConfigFile.sftpPassword) missingConfigs.push('sftpPassword');
+    }
+
+    if (missingConfigs.length > 0 && !localFlag) {
+        console.error(`Error: Missing necessary configuration values in ${config.sftpConfigFile}:`, missingConfigs.join(', '));
         console.log('');
         process.exit(1);
     }
 
     const applicationPath = getApplicationPath();
-    if (productionFlag || stagingFlag) {
+    if (productionFlag || stagingFlag || localFlag) {
         await updateRoot();
-        console.log(chalk.green(`Starting ${productionFlag ? 'production' : 'staging'} ${deleteFlag ? 'deletion' : 'release'} process to ${applicationPath}...`));
+        if (localFlag) {
+            console.log(chalk.green(`Starting build process to ${config.distPath}...`));
+        }
+        else {
+            console.log(chalk.green(`Starting ${productionFlag ? 'production' : 'staging'} ${deleteFlag ? 'deletion' : 'release'} process to ${applicationPath}...`));
+        }
     }
 
     const currentVersion = await getCurrentVersion();
@@ -273,15 +299,39 @@ async function main() {
     }
 
     let filesUploaded = null;
-    if (rollbackFlag) {
+    if (rollbackFlag && !localFlag) {
         await rollback(applicationPath);
     }
     else if (deleteFlag) {
-        await deleteDirectoryFromServer(applicationPath);
+        if (localFlag) {
+            await clearDirectory(config.distPath);
+        }
+        else {
+            await deleteDirectoryFromServer(applicationPath);
+        }
     }
     else {
         await compressImages();
-        filesUploaded = await uploadFilesToServer(filesToCache, applicationPath) | 0;
+
+        if (localFlag) {
+            console.log('');
+
+            if (databaseDir) {
+                await readFilesFromDirectory(databaseDir, filesToCache);
+            }
+            await copyFilesToLocalDirectory(filesToCache, config.distPath, true);
+
+            if (htaccessFile) {
+                infoFlag && console.log(chalk.gray(`Copying ${htaccessFile} file as ".htacces" to ${config.distPath}...`));
+                await fsPromises.copyFile(htaccessFile, path.join(config.distPath, '.htaccess'));
+                infoFlag && console.log(chalk.gray('Copy successful'));
+                infoFlag && console.log('');
+            }
+
+            console.log(chalk.green(`Build process to ${config.distPath} completed successfully.`));
+        } else {
+            filesUploaded = await uploadFilesToServer(filesToCache, applicationPath) | 0;
+        }
     }
 
     console.log('');
@@ -306,9 +356,9 @@ async function main() {
     const minutes = Math.floor(elapsedTime / 60000);
     const seconds = ((elapsedTime % 60000) / 1000).toFixed(0);
 
-    console.log(chalk.gray(`Elapsed time: ${minutes}:${seconds} minutes`));
+    console.log(chalk.gray(`Elapsed time: ${minutes}: ${seconds} minutes`));
 
-    await addStatistics(`${minutes}:${seconds} minutes`, version, filesUploaded, filesToCache.length, cacheSize, minifiedSize);
+    await addStatistics(`${minutes}: ${seconds} minutes`, version, filesUploaded, filesToCache.length, cacheSize, minifiedSize);
 
     console.log('');
 }
@@ -340,8 +390,11 @@ async function initializeProject() {
         console.log(chalk.yellow('The root_EXAMPLE directory does not exist. Please pull/download the framework again. Skipping initialization.'));
         console.log('');
     } else {
-        console.log(chalk.green('Initializing project...'));
+        console.log(chalk.yellow('Initializing project...'));
+        console.log('');
+        console.log('Copying files from root_EXAMPLE to root...');
         await copyDirectory(sourceDir, targetDir);
+        console.log('');
         await updateConfig();
         await updatePipelineConfig();
         await updateRoot();
@@ -457,26 +510,30 @@ async function minifyFiles(filesToCache) {
             const result = UglifyJS.minify(fileContent);
             if (result.error) throw result.error;
             await fsPromises.writeFile(outputPath, result.code, 'utf8');
+            const minifiedStats = await fsPromises.stat(outputPath);
+            totalSize += minifiedStats.size;
+            if (infoFlag) {
+                console.log(chalk.gray(`    Minified ${path.basename(file)}: ${originalSizeKB} KB > ${(minifiedStats.size / 1024).toFixed(2)} KB`));
+            }
         } else if (file.endsWith('.css')) {
             const fileContent = await fsPromises.readFile(file, 'utf8');
             const result = new CleanCSS({}).minify(fileContent);
             if (result.errors.length > 0) throw result.errors;
             await fsPromises.writeFile(outputPath, result.styles, 'utf8');
+            const minifiedStats = await fsPromises.stat(outputPath);
+            totalSize += minifiedStats.size;
+            if (infoFlag) {
+                console.log(chalk.gray(`    Minified ${path.basename(file)}: ${originalSizeKB} KB > ${(minifiedStats.size / 1024).toFixed(2)} KB`));
+            }
         }
         else {
-            if (!infoFlag) bar.tick();
-            continue;
+            totalSize += originalStats.size;
+            if (infoFlag) {
+                console.log(chalk.gray(`    No minification for ${path.basename(file)}: ${originalSizeKB} KB`));
+            }
         }
 
-        const minifiedStats = await fsPromises.stat(outputPath);
-        totalSize += minifiedStats.size;
-
-        if (infoFlag) {
-            console.log(chalk.gray(`    Minified ${path.basename(file)}: ${originalSizeKB} KB > ${(minifiedStats.size / 1024).toFixed(2)} KB`));
-        }
-        else {
-            bar.tick();
-        }
+        bar.tick();
     }
 
     if (infoFlag) {
@@ -874,7 +931,11 @@ async function uploadFilesToServer(filesToCache, applicationPath) {
 
     if (skipCompressedUploadFlag) {
         console.log(chalk.grey('Skipping files that are in the compressed directory.'))
-        filesToCache = filesToCache.filter(file => !file.startsWith(config.compressed));
+        filesToCache = filesToCache.filter(file => !file.startsWith(config.compressedDir));
+        if (infoFlag) {
+            console.log(chalk.grey(`Files to cache after skipping compressed files in ${config.compressedDir}: `));
+            filesToCache.forEach(file => console.log(chalk.grey(`    ${file} `)));
+        }
     }
     let filesToUpload = [...filesToCache, './Birdhouse/filesToCache.js'];
 
@@ -931,7 +992,7 @@ async function createDirectoriesOnServer(filesToUpload, sftp, applicationPath) {
     directories.sort((a, b) => a.split('/').length - b.split('/').length);
 
     const dirBar = new ProgressBar('    Creating directories [:bar] :percent :etas', {
-        complete: '=',
+        complete: '+',
         incomplete: ' ',
         width: 24,
         total: directories.length - 1
@@ -951,7 +1012,7 @@ async function createDirectoriesOnServer(filesToUpload, sftp, applicationPath) {
 
 async function uploadFilesToDirectory(filesToUpload, sftp, applicationPath) {
     const uploadBar = new ProgressBar('    Uploading files [:bar] :percent :etas', {
-        complete: '=',
+        complete: '>',
         incomplete: ' ',
         width: 24,
         total: filesToUpload.length
@@ -960,41 +1021,17 @@ async function uploadFilesToDirectory(filesToUpload, sftp, applicationPath) {
     for (const file of filesToUpload) {
         infoFlag && console.log(chalk.gray(`    Uploading: ${file}`));
 
+        const preparedFilePath = await prepareFile(file);
+
         const relativeFilePath = file.replace(/^\.\/|^\//, '');
         const remotePath = `/${applicationPath}/${relativeFilePath.replace(/\\/g, '/')}`;
 
-        let localFilePath = path.join(minifiedDirectory, path.basename(file));
-        localFilePath = fs.existsSync(localFilePath) && minifyFlag ? localFilePath : file;
-
-        if (file.endsWith('index.html')) {
-            const content = await fsPromises.readFile(localFilePath, 'utf-8');
-            const root = parse(content);
-
-            const baseTag = root.querySelector('base');
-            if (config.basePath) {
-                if (baseTag) {
-                    baseTag.setAttribute('href', config.basePath);
-                } else {
-                    const head = root.querySelector('head');
-                    const newBaseTag = document.createElement('base');
-                    newBaseTag.setAttribute('href', config.basePath);
-                    head.prepend(newBaseTag);
-                }
-            } else {
-                baseTag && baseTag.remove();
-            }
-
-            const tempFilePath = localFilePath + '.temp';
-            await fsPromises.writeFile(tempFilePath, root.toString());
-
-            await sftp.fastPut(tempFilePath, remotePath);
-
-            await fsPromises.unlink(tempFilePath);
-        } else {
-            await sftp.fastPut(localFilePath, remotePath);
-        }
-
+        await sftp.fastPut(preparedFilePath, remotePath);
         uploadBar.tick();
+
+        if (preparedFilePath.endsWith('.temp')) {
+            await fsPromises.unlink(preparedFilePath);
+        }
     }
 
     if (htaccessFile) {
@@ -1189,6 +1226,100 @@ async function generateImageSizes(inputPath, outputDir, fileName, sizes) {
 
     console.log(chalk.green(`Images generated successfully`));
     console.log('');
+}
+
+async function prepareFile(file) {
+    infoFlag && console.log(chalk.grey(`Preparing file: ${file}`));
+    let localFilePath = path.join(minifiedDirectory, path.basename(file));
+    localFilePath = fs.existsSync(localFilePath) && minifyFlag ? localFilePath : file;
+
+    if (file.endsWith('index.html')) {
+        const content = await fsPromises.readFile(localFilePath, 'utf-8');
+        const root = parse(content);
+        const baseTag = root.querySelector('base');
+
+        if (config.basePath) {
+            if (baseTag) {
+                baseTag.setAttribute('href', config.basePath);
+            } else {
+                const head = root.querySelector('head');
+                const newBaseTag = document.createElement('base');
+                newBaseTag.setAttribute('href', config.basePath);
+                head.prepend(newBaseTag);
+            }
+        } else {
+            baseTag && baseTag.remove();
+        }
+
+        localFilePath += '.temp';
+        await fsPromises.writeFile(localFilePath, root.toString());
+    }
+    return localFilePath;
+}
+
+async function copyFilesToLocalDirectory(filesToUpload, dir, clear = false) {
+    infoFlag && console.log(chalk.grey(`Copying ${filesToUpload.length} files to local directory: ${dir}`));
+
+    if (!dir) {
+        console.log(chalk.yellow('No directory specified. Skipping copying.'));
+        return;
+    }
+
+    if (typeof dir !== 'string') {
+        throw new Error('The "dir" argument must be of type string. Received ' + typeof dir);
+    }
+
+    const distDir = path.resolve(dir);
+
+    if (clear) {
+        await clearDirectory(distDir);
+    }
+
+    await ensureDirectoryExists(distDir);
+
+    for (const file of filesToUpload) {
+        const preparedFile = await prepareFile(file);
+        const relativePath = path.relative(process.cwd(), file);
+        const destPath = path.join(distDir, relativePath);
+        await ensureDirectoryExists(path.dirname(destPath));
+        await fsPromises.copyFile(preparedFile, destPath);
+        infoFlag && console.log(`File copied to dist directory: ${destPath}`);
+
+        if (preparedFile.endsWith('.temp')) {
+            await fsPromises.unlink(preparedFile);
+        }
+    }
+}
+
+async function ensureDirectoryExists(dir) {
+    infoFlag && console.log(chalk.grey(`Ensuring directory exists: ${dir}`));
+    try {
+        await fsPromises.access(dir);
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            await fsPromises.mkdir(dir, { recursive: true });
+            infoFlag && console.log(`Directory created: ${dir}`);
+        } else {
+            throw error;
+        }
+    }
+}
+
+async function clearDirectory(dir) {
+    infoFlag && console.log(chalk.grey(`Clearing directory: ${dir}`));
+    try {
+        await fsPromises.access(dir);
+        await fsPromises.rm(dir, { recursive: true, force: true });
+        console.log(`Directory cleared: ${dir}`);
+        await fsPromises.mkdir(dir, { recursive: true });
+    } catch (error) {
+        if (error.code === 'ENOENT') {
+            console.log(`Directory not found, nothing to clear: ${dir}`);
+            await fsPromises.mkdir(dir, { recursive: true });
+        } else {
+            throw error;
+        }
+    }
 }
 
 main().catch(err => console.error(chalk.red('An error occurred in the pipeline:', err.message)));

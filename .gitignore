@@ -10,6 +10,7 @@ filesToCache.js
 /robots.txt
 /.htaccess
 /sftp-config.js
+/dist
 .gitkeep
 config.js
 pipeline-config.js
