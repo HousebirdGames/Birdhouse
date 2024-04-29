@@ -315,11 +315,12 @@ async function main() {
 
         if (localFlag) {
             console.log('');
-
+            let filesToUpload = filesToCache;
             if (databaseDir) {
-                await readFilesFromDirectory(databaseDir, filesToCache);
+                filesToUpload = await readFilesFromDirectory(databaseDir, [...filesToCache]);
             }
-            await copyFilesToLocalDirectory(filesToCache, config.distPath, true);
+
+            await copyFilesToLocalDirectory(filesToUpload, config.distPath, true);
 
             if (htaccessFile) {
                 infoFlag && console.log(chalk.gray(`Copying ${htaccessFile} file as ".htacces" to ${config.distPath}...`));
@@ -353,12 +354,15 @@ async function main() {
 
     const endTime = new Date();
     const elapsedTime = endTime - startTime;
-    const minutes = Math.floor(elapsedTime / 60000);
-    const seconds = ((elapsedTime % 60000) / 1000).toFixed(0);
+    let minutes = Math.floor(elapsedTime / 60000);
+    let seconds = ((elapsedTime % 60000) / 1000).toFixed(0);
 
-    console.log(chalk.gray(`Elapsed time: ${minutes}: ${seconds} minutes`));
+    minutes = String(minutes).padStart(2, '0');
+    seconds = String(seconds).padStart(2, '0');
 
-    await addStatistics(`${minutes}: ${seconds} minutes`, version, filesUploaded, filesToCache.length, cacheSize, minifiedSize);
+    console.log(chalk.gray(`Elapsed time: ${minutes}:${seconds} minutes`));
+
+    await addStatistics(`${minutes}:${seconds} minutes`, version, filesUploaded, filesToCache.length, cacheSize, minifiedSize);
 
     console.log('');
 }
@@ -864,23 +868,26 @@ async function getFilesToCache() {
     return [...new Set(filesToCache)].sort();
 }
 
-async function readFilesFromDirectory(directory, filesToCache) {
+async function readFilesFromDirectory(directory, files = []) {
     await ensureDirectoryExists(directory);
 
     infoFlag && console.log(chalk.gray(`Reading files from ${directory}...`));
     const filesInDirectory = await fsPromises.readdir(directory);
     for (const file of filesInDirectory) {
         const fullPath = path.join(directory, file);
-        if (fs.existsSync(fullPath)) {
+        if (file.startsWith('.')) {
+            infoFlag && console.log(chalk.gray(`    Skipping hidden file/folder: ${fullPath}`));
+        }
+        else if (fs.existsSync(fullPath)) {
             const stats = await fsPromises.stat(fullPath);
             if (stats.isDirectory()) {
                 infoFlag && console.log(chalk.gray(`    Reading files from ${fullPath}...`));
-                await readFilesFromDirectory(fullPath, filesToCache);
+                await readFilesFromDirectory(fullPath, files);
             } else {
                 const fileType = path.extname(file);
                 if (!ignoredFileTypes.includes(fileType)) {
                     infoFlag && console.log(chalk.gray(`    Adding ${fullPath} to files to cache...`));
-                    filesToCache.push(fullPath.replace(/\//g, '/'));
+                    files.push(fullPath.replace(/\//g, '/'));
                     fileTypeCounts[fileType] = (fileTypeCounts[fileType] || 0) + 1;
                     fileTypeSizes[fileType] = (fileTypeSizes[fileType] || 0) + stats.size;
                 }
@@ -889,6 +896,7 @@ async function readFilesFromDirectory(directory, filesToCache) {
             console.log(`File does not exist: ${fullPath}`);
         }
     }
+    return files;
 }
 
 async function writeFilesToCacheFile(filesToCache) {
@@ -1229,7 +1237,7 @@ async function generateImageSizes(inputPath, outputDir, fileName, sizes) {
 }
 
 async function prepareFile(file) {
-    infoFlag && console.log(chalk.grey(`Preparing file: ${file}`));
+    infoFlag && console.log(chalk.grey(`    Preparing file: ${file}`));
     let localFilePath = path.join(minifiedDirectory, path.basename(file));
     localFilePath = fs.existsSync(localFilePath) && minifyFlag ? localFilePath : file;
 
