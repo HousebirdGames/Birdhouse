@@ -1763,6 +1763,28 @@ export async function loadCSS(url, forComponent = false) {
 }
 
 /**
+ * Dynamically adds a JavaScript file to the document's body.
+ *
+ * @param {string} src The URL of the JavaScript file to load.
+ * @param {boolean} async Optional. Specifies whether the script should be loaded asynchronously. Defaults to false.
+ * @returns {Promise<boolean>} A promise that resolves to true if the script was loaded successfully, or false if it failed to load.
+ */
+export function addScript(src, async = false) {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = src;
+        script.async = async;
+        script.type = 'module';
+
+        // Add event listeners for the load and error events
+        script.addEventListener('load', () => resolve(true));
+        script.addEventListener('error', () => resolve(false));
+
+        document.body.appendChild(script);
+    });
+}
+
+/**
  * Removes a CSS file from the document based on its URL.
  * 
  * @param {string} url The URL of the CSS file to remove.
