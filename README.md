@@ -58,7 +58,7 @@ Follow these steps to get the project up and running on your local machine:
 3. Install the project pipeline dependencies and initialize the project:
 
     ```bash
-    npm start
+    npm run start
     ```
 
 **Note:** If you ever change the name of you project directory, remember to update the localhost `.htaccess` file to reflect the new directory name.
@@ -73,6 +73,23 @@ Open these files in your text editor and adjust the settings to match your proje
 Once you've finished configuring the project, you can run it on your local machine. If you're using [XAMPP](https://www.apachefriends.org/index.html), start the XAMPP control panel, ensure Apache is running, and then navigate to the project in your web browser.
 
 **Important:** Do not change the service-worker.js. It will get recopied to root on deployment and on root updates.
+
+## Local Development Server **(experimental)**
+
+The Birdhouse Framework includes a script, `server.js`, designed to simplify local development by serving your application directly from your development environment. This script is integral to simulating an Apache server environment, ensuring that your application behaves consistently between development and production. While `server.js` can function independently for basic tasks, it is primarily meant to be used alongside the `serve.js` script, which handles automatic file watching, building, and server restarting.
+
+To use `serve.js`, ensure you are in the `Birdhouse` directory, then execute this command:
+```bash
+node serve
+```
+```bash
+npm run serve
+```
+ This starts the local server and begins serving your project from the `dist` directory, automatically applying any Apache-like .htaccess rules you have configured for HTTP headers.
+
+This setup not only mimics the production environment closely but also allows you to test changes instantly without manual refreshes, although you should manually reload your browser to see updates.
+
+**Important:** Remember, `serve.js` and `server.js` are for local development purposes only and should not be used as a production server.
 
 ## Project Structure
 
@@ -180,6 +197,8 @@ This setup automatically calls `pre-deploy-script.js` (located in the scripts fo
 - `-production` or `-p`: Release to the production environment.
 - `-staging` or `-s`: Release to the staging environment.
 - `-local` or `-l`: Builds the project to the local dist directory and thereby skips the upload to the server (so -p and -s are ignored).
+- `-forced <-p|-s|-l>`: Forces the update (triggers a page reload after the new version is cached on the user's device), without notifying the user.
+- `-silent <-p|-s|-l>`: Performs a silent update which does not display the update notification and becomes active after the next page reload.
 - `-version` or `-v`: Update the version of the `service-worker.js`.
 - `-cache` or `-c`: (Re-)Generate the `filesToCache.js` file.
 - `-minify` or `-m`: Minifies the files in filesToCache.js (before uploading them to the server; if not set, the original files will be uploaded).

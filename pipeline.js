@@ -99,6 +99,8 @@ const rollbackFlag = process.argv.includes('-rollback') || process.argv.includes
 const backupFlag = process.argv.includes('-backup') || process.argv.includes('-b');
 const deleteFlag = process.argv.includes('-delete') || process.argv.includes('-d');
 const versionFlagIndex = process.argv.findIndex(arg => arg === '-version' || arg === '-v');
+const forcedUpdateFlag = process.argv.includes('-forced');
+const silentUpdateFlag = process.argv.includes('-silent');
 const helpFlag = process.argv.includes('-help') || process.argv.includes('-h');
 const infoFlag = process.argv.includes('-info') || process.argv.includes('-i');
 const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m');
@@ -128,6 +130,8 @@ function help() {
         -p, -production         Release to production
         -s, -staging            Release to staging (is ignored if -p is set)
         -l, -local              Builds the project to the local dist directory and thereby skips the upload to the server (so -p and -s are ignored)
+        -forced <-p|-s|-l>      Forces the update (triggers a page reload after the new version is cached on the user's device), without notifying the user
+        -silent <-p|-s|-l>      Performs a silent update which does not display the update notification and becomes active after the next page reload
         -su,-skipCompU          Skips image compression and upload of the compressed folder
         -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
         -gi,-genicons           Creates icons of all sizes from the original icon and exits
@@ -212,7 +216,7 @@ async function main() {
         process.exit(0);
     }
 
-    if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && config.preReleaseScripts.length > 0) {
+    if ((productionFlag || stagingFlag || localFlag) && !deleteFlag && !rollbackFlag && config.preReleaseScripts.length > 0) {
         await runScriptsSequentially(config.preReleaseScripts)
             .then(() => {
                 console.log('Execution of all pre release scripts finished.')
@@ -281,6 +285,9 @@ async function main() {
         const newVersion = getNewVersion(currentVersion);
         version = newVersion;
         await updateVersion(newVersion);
+    }
+    else {
+        await updateVersion(currentVersion);
     }
 
     await createConfigForServiceWorker();
@@ -791,7 +798,8 @@ function getNewVersion(currentVersion) {
 async function updateVersion(newVersion) {
     const filePath = './config.js';
     let data = await fsPromises.readFile(filePath, 'utf8');
-    data = data.replace(/("version": ")(.*?)(",)/, `$1${newVersion}$3`);
+    newVersion = newVersion.replace(/-f|-s/g, '');
+    data = data.replace(/("version": ")(.*?)(",)/, `$1${newVersion}${forcedUpdateFlag ? '-f' : silentUpdateFlag ? '-s' : ''}$3`);
     await fsPromises.writeFile(filePath, data, 'utf8');
     await updateVersionOnServiceWorker(newVersion);
     console.log(`Version updated to: ${newVersion}`);
@@ -926,7 +934,6 @@ async function writeFilesToCacheFile(filesToCache) {
             totalSize += stats.size;
         }
     });
-
 
     console.log(chalk.yellow(`Wrote ${filesToCache.length} files (total size: ${(totalSize / 1048576).toFixed(2)} MB) to ${cacheFile}.`));
 
