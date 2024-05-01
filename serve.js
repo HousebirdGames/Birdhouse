@@ -21,11 +21,13 @@ By default, the build is configured with -c -v -m -l -forced -nl. The -l flag is
 overriding any -production (-p) or -staging (-s) flags.
 */
 
+const fs = require('fs');
 const { spawn, exec } = require('child_process');
 const chokidar = require('chokidar');
 const path = require('path');
 
 const projectRoot = path.resolve(__dirname, '..');
+const lockFilePath = path.join(projectRoot, 'Birdhouse/pipeline.lock');
 let isBuilding = false;
 let serverProcess = null;
 
@@ -49,6 +51,10 @@ function startServer() {
 }
 
 const runPipelineAndRestartServer = () => {
+    if (fs.existsSync(lockFilePath)) {
+        return;
+    }
+
     if (isBuilding) {
         return;
     }

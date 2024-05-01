@@ -39,11 +39,32 @@ const vm = require('vm');
 const { parse } = require('node-html-parser');
 const { exec } = require('child_process');
 const util = require('util');
+const { exit } = require('process');
 
 const execAsync = util.promisify(exec);
 
 const pathSegments = path.dirname(__dirname).split(path.sep);
 const localhostPath = pathSegments[pathSegments.length - 1];
+
+const lockFilePath = './Birdhouse/pipeline.lock';
+removeLock();
+
+function createLock() {
+    fs.writeFileSync(lockFilePath, 'locked');
+    console.log('Deployment lock created.');
+}
+
+function removeLock() {
+    if (fs.existsSync(lockFilePath)) {
+        fs.unlinkSync(lockFilePath);
+        console.log('Deployment lock removed.');
+    }
+}
+
+function exitPipeline() {
+    removeLock();
+    process.exit(0);
+}
 
 const defaultConfig = {
     version: "1.0.0.0",
@@ -138,7 +159,7 @@ function help() {
         
         Note: The database folder is uploaded, but not added to the cached files.
         `);
-        process.exit(0);
+        exitPipeline();
     }
 }
 
@@ -208,12 +229,16 @@ async function main() {
 
     help();
 
+    if (localFlag || productionFlag || stagingFlag) {
+        createLock();
+    }
+
     console.log('');
 
     if (initializeFlag) {
         console.log(chalk.green('Initializing project in ' + process.cwd()));
         await initializeProject();
-        process.exit(0);
+        exitPipeline();
     }
 
     if ((productionFlag || stagingFlag || localFlag) && !deleteFlag && !rollbackFlag && config.preReleaseScripts.length > 0) {
@@ -228,22 +253,22 @@ async function main() {
     if (updateFlag) {
         await updateConfig();
         await updatePipelineConfig();
-        process.exit(0);
+        exitPipeline();
     }
 
     if (updateRootFlag) {
         await updateRoot();
-        process.exit(0);
+        exitPipeline();
     }
 
     if (generateFaviconsFlag) {
         await generateImageSizes(faviconPath, faviconsOutputDir, faviconsFileName, faviconSizes);
-        process.exit(0);
+        exitPipeline();
     }
 
     if (generateIconsFlag) {
         await generateImageSizes(manifestIconPath, manifestIconOutputDir, manifestIconFileName, manifestIconSizes);
-        process.exit(0);
+        exitPipeline();
     }
 
     let missingConfigs = [];
@@ -799,7 +824,9 @@ async function updateVersion(newVersion) {
     const filePath = './config.js';
     let data = await fsPromises.readFile(filePath, 'utf8');
     newVersion = newVersion.replace(/-f|-s/g, '');
-    data = data.replace(/("version": ")(.*?)(",)/, `$1${newVersion}${forcedUpdateFlag ? '-f' : silentUpdateFlag ? '-s' : ''}$3`);
+    console.log(forcedUpdateFlag ? 'Type: Forced Update' : silentUpdateFlag ? 'Type: Silent Update' : 'Type: Regular Update')
+    newVersion = `${newVersion}${forcedUpdateFlag ? '-f' : silentUpdateFlag ? '-s' : ''}`;
+    data = data.replace(/("version": ")(.*?)(",)/, `$1${newVersion}$3`);
     await fsPromises.writeFile(filePath, data, 'utf8');
     await updateVersionOnServiceWorker(newVersion);
     console.log(`Version updated to: ${newVersion}`);
@@ -1337,4 +1364,7 @@ async function clearDirectory(dir) {
     }
 }
 
-main().catch(err => console.error(chalk.red('An error occurred in the pipeline:', err.message)));
+main().catch(err => console.error(() => {
+    chalk.red('An error occurred in the pipeline:', err.message);
+    exitPipeline();
+})).then(() => exitPipeline());
