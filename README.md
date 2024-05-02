@@ -14,7 +14,7 @@ The Framework is a lightweight way to have a web app that mainly utilizes the re
 
 Access comprehensive Birdhouse documentation at [birdhouse-js.com](https://birdhouse-js.com).
 
-For private, local access to the documentation, leverage the [official Birdhouse GitHub repository](https://github.com/HousebirdGames/Birdhouse-Website). Simply clone the repository and deploy it locally, for example, with XAMPP.
+For private, local access to the documentation, leverage the [official Birdhouse Doumentation Website GitHub repository](https://github.com/HousebirdGames/Birdhouse-Website). Simply clone the repository and deploy it locally, for example, with XAMPP or using the local development server (instructions below).
 
 Keep up with the latest updates by viewing [the commit history on GitHub](https://github.com/HousebirdGames/Birdhouse/commits/main/) or [the changelog on the documentation website](https://birdhouse-js.com/changelog).
 
@@ -78,14 +78,30 @@ Once you've finished configuring the project, you can run it on your local machi
 
 The Birdhouse Framework includes a script, `server.js`, designed to simplify local development by serving your application directly from your development environment. This script is integral to simulating an Apache server environment, ensuring that your application behaves consistently between development and production. While `server.js` can function independently for basic tasks, it is primarily meant to be used alongside the `serve.js` script, which handles automatic file watching, building, and server restarting.
 
-To use `serve.js`, ensure you are in the `Birdhouse` directory, then execute this command:
+To use `serve.js`, ensure you are in the `Birdhouse` directory, then execute these commands:
+
+If you have not already, cd in to Birdhouse.
+```bash
+cd Birdhouse
+```
+Then make sure all node modules are installed.
+```bash
+npm install
+```
+Now you can serve the app locally.
 ```bash
 node serve
 ```
+or
 ```bash
 npm run serve
 ```
- This starts the local server and begins serving your project from the `dist` directory, automatically applying any Apache-like .htaccess rules you have configured for HTTP headers.
+You can also specify a port like this (default: 4200):
+```bash
+node serve 3000
+```
+
+ This starts the local server and begins serving your project from the `dist` directory, automatically applying any Apache-like .htaccess rules you have configured for HTTP headers. The terminal will provide the URL with the default or specified port.
 
 This setup not only mimics the production environment closely but also allows you to test changes instantly without manual refreshes, although you should manually reload your browser to see updates.
 

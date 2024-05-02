@@ -47,17 +47,20 @@ const pathSegments = path.dirname(__dirname).split(path.sep);
 const localhostPath = pathSegments[pathSegments.length - 1];
 
 const lockFilePath = './Birdhouse/pipeline.lock';
+
+const infoFlag = process.argv.includes('-info') || process.argv.includes('-i');
+
 removeLock();
 
 function createLock() {
     fs.writeFileSync(lockFilePath, 'locked');
-    console.log('Deployment lock created.');
+    infoFlag && console.log('Pipeline lock created.');
 }
 
 function removeLock() {
     if (fs.existsSync(lockFilePath)) {
         fs.unlinkSync(lockFilePath);
-        console.log('Deployment lock removed.');
+        infoFlag && console.log('Pipeline lock removed.');
     }
 }
 
@@ -120,10 +123,9 @@ const rollbackFlag = process.argv.includes('-rollback') || process.argv.includes
 const backupFlag = process.argv.includes('-backup') || process.argv.includes('-b');
 const deleteFlag = process.argv.includes('-delete') || process.argv.includes('-d');
 const versionFlagIndex = process.argv.findIndex(arg => arg === '-version' || arg === '-v');
-const forcedUpdateFlag = process.argv.includes('-forced');
+const forcedUpdateFlag = process.argv.includes('-forced') || process.argv.includes('-force');
 const silentUpdateFlag = process.argv.includes('-silent');
 const helpFlag = process.argv.includes('-help') || process.argv.includes('-h');
-const infoFlag = process.argv.includes('-info') || process.argv.includes('-i');
 const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m');
 const skipCompressedUploadFlag = process.argv.includes('-skipCompU') || process.argv.includes('-su');
 const disableStatisticsFlag = process.argv.includes('-nolog') || process.argv.includes('-nl');
@@ -133,7 +135,7 @@ const localFlag = process.argv.includes('-l') || process.argv.includes('-local')
 
 function help() {
     if (helpFlag || process.argv.length === 2) {
-        console.log(`        Usage: node pipeline.js [options]
+        console.log(`        Usage: node pipeline [options]
         
         Options:
         -u, -update             Updates or creates the config.js and config-pipeline.js with necessary entries, orders them and exits
@@ -166,6 +168,8 @@ function help() {
 let config = defaultPipelineConfig;
 let sftpConfigFile = null;
 if (!initializeFlag) {
+
+    help();
 
     try {
         config = require('../pipeline-config.js');
@@ -226,8 +230,6 @@ let fileTypeSizes = {};
 
 async function main() {
     await importChalk();
-
-    help();
 
     if (localFlag || productionFlag || stagingFlag) {
         createLock();
@@ -308,11 +310,10 @@ async function main() {
 
     if (versionFlagIndex !== -1) {
         const newVersion = getNewVersion(currentVersion);
-        version = newVersion;
-        await updateVersion(newVersion);
+        version = await updateVersion(newVersion);
     }
     else {
-        await updateVersion(currentVersion);
+        version = await updateVersion(currentVersion);
     }
 
     await createConfigForServiceWorker();
@@ -368,7 +369,7 @@ async function main() {
     }
 
     console.log('');
-    if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && filesUploaded > 0) {
+    if ((productionFlag || stagingFlag || localFlag) && !deleteFlag && !rollbackFlag && (filesUploaded > 0 || localFlag)) {
         console.log(chalk.green(`Release process of version ${version} completed successfully.`));
 
         if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && config.postReleaseScripts.length > 0) {
@@ -830,6 +831,7 @@ async function updateVersion(newVersion) {
     await fsPromises.writeFile(filePath, data, 'utf8');
     await updateVersionOnServiceWorker(newVersion);
     console.log(`Version updated to: ${newVersion}`);
+    return newVersion;
 }
 
 async function updateVersionOnServiceWorker(newVersion) {
