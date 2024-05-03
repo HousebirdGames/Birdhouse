@@ -44,6 +44,7 @@ async function createWindow() {
     mainWindow.webContents.on('new-window', handleRedirect);
     mainWindow.webContents.on('will-navigate', handleRedirect);
 
+    //Uncomment the following line to open the dev tools on startup
     //mainWindow.webContents.openDevTools();
 }
 

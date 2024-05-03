@@ -26,25 +26,19 @@ async function packageApp() {
     console.log('Copied electron-main.js to build-temp.');
     console.log('Finished prepackaging.');
 
-    // Read the config file
     const configFilePath = path.join(__dirname, 'build-temp', 'dist', 'config-sw.js');
     const configFileCode = fs.readFileSync(configFilePath, 'utf8');
 
-    // Create a sandboxed environment with a `self` object
     const sandbox = { self: {} };
     vm.createContext(sandbox);
 
-    // Execute the config file code in the sandboxed environment
     vm.runInContext(configFileCode, sandbox);
 
-    // Extract the config object
     const config = sandbox.self.config;
 
-    // Read the package.json file
     const packageJsonPath = path.join(__dirname, 'build-temp', 'package.json');
     const packageJson = require(packageJsonPath);
 
-    // Update the properties
     packageJson.name = config.pageTitle;
     packageJson.version = config.version;
     packageJson.description = config.pageDescription;
@@ -53,7 +47,6 @@ async function packageApp() {
         "darwin": "dist/" + config.appIcon + ".icns"
     };
 
-    // Write the updated package.json back to disk
     fs.writeFileSync(packageJsonPath, JSON.stringify(packageJson, null, 2));
 
     console.log('');
