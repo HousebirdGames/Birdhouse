@@ -28,7 +28,7 @@ const path = require('path');
 const portscanner = require('portscanner');
 
 const app = express();
-const port = process.env.PORT || parseInt(process.argv[2]) || 4200;
+let port = process.env.PORT || parseInt(process.argv[2]) || 4200;
 const htaccessPath = path.join(__dirname, 'dist/.htaccess');
 
 const loadHtaccess = async () => {
@@ -152,27 +152,67 @@ function checkPortSafety(port) {
     }
 }
 
+let server;
+
 checkPortSafety(port);
 
-portscanner.checkPortStatus(port, 'localhost', function (error, status) {
-    if (status === 'open') {
-        console.warn(`Port ${port} is already in use. Please use a different port.`);
-    } else {
-        const server = app.listen(port, () => {
-            console.log(`Server running at http://localhost:${port}/`);
-        });
+function start(findAlternativePort = false) {
+    checkPortStatusAndStart(findAlternativePort);
+}
 
-        // In Unix-like systems, binding to ports below 1024 typically requires root privileges. This is not the case on Windows (win32).
-        if (port < 1024 && process.platform !== 'win32') {
-            console.warn('You are using a port below 1024, which might require root permissions on Unix-like systems. If the server fails to start or is not accessible, please try a port above 1024.');
-        }
+function checkPortStatusAndStart(findAlternativePort = false) {
+    portscanner.checkPortStatus(port, 'localhost', function (error, status) {
+        if (status === 'open') {
+            console.warn(`Port ${port} is already in use..`);
 
-        server.on('error', (error) => {
-            if (error.code === 'EADDRINUSE') {
-                console.log(`Port ${port} is already in use. Please use a different port.`);
-            } else {
-                console.error('An error occurred while starting the server:', error);
+            if (findAlternativePort) {
+                console.warn(`Finding an alternative port...`);
+                findUnusedPort(1024, 65535).then(newPort => {
+                    console.log(`Found alternative port: ${newPort}`);
+                    port = newPort;
+                    checkPortStatusAndStart();
+                }).catch(err => {
+                    console.error('No unused port found:', err);
+                });
             }
-        });
+            else {
+                console.warn(`Shutting down.`);
+                process.exit(1);
+            }
+        }
+        else {
+            server = app.listen(port, () => {
+                console.log(`Server running at http://localhost:${port}/`);
+            });
+
+            // In Unix-like systems, binding to ports below 1024 typically requires root privileges. This is not the case on Windows (win32).
+            if (port < 1024 && process.platform !== 'win32') {
+                console.warn('You are using a port below 1024, which might require root permissions on Unix-like systems. If the server fails to start or is not accessible, please try a port above 1024.');
+            }
+
+            server.on('error', (error) => {
+                if (error.code === 'EADDRINUSE') {
+                    console.error(`Port ${port} is already in use. Please use a different port.`);
+                    process.exit(1);
+                } else {
+                    console.error('An error occurred while starting the server:', error);
+                }
+            });
+        }
+    });
+}
+
+function findUnusedPort(start, end) {
+    return portscanner.findAPortNotInUse(start, end, 'localhost');
+}
+
+module.exports = {
+    start,
+    server,
+    port,
+    close: () => {
+        if (server && server.close) {
+            server.close();
+        }
     }
-});
+};

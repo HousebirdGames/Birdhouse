@@ -39,7 +39,7 @@ const vm = require('vm');
 const { parse } = require('node-html-parser');
 const { exec } = require('child_process');
 const util = require('util');
-const { exit } = require('process');
+const toIco = require('to-ico');
 
 const execAsync = util.promisify(exec);
 
@@ -85,6 +85,7 @@ const defaultConfig = {
     enableInfoBar: false,
     userLoginEnabled: false,
     redirect404ToRoot: false,
+    appIcon: 'img/app-icons/icon',
 };
 
 const defaultPipelineConfig = {
@@ -106,11 +107,13 @@ const defaultPipelineConfig = {
     manifestIconFileName: 'Icon',
     manifestIconSizes: [],
     statisticsFile: 'pipeline-log.txt',
-    ignoredFileTypes: ['.zip', '.rar', '.md', '.txt', '.psd', '.htaccess'],
-    directoriesToInclude: ['src', 'fonts', 'img/favicons', 'img/icons', 'img/screenshots', 'uploads'],
+    ignoredFileTypes: ['.zip', '.rar', '.md', '.psd', '.htaccess'],
+    directoriesToInclude: ['src', 'fonts', 'img/favicons', 'img/icons', 'img/app-icons', 'img/screenshots', 'uploads'],
     directoriesToExcludeFromCache: ['img/screenshots', 'uploads'],
     preReleaseScripts: [],
     postReleaseScripts: [],
+    appIconSourcePath: 'img/logos-originals/Birdhouse-Logo.jpg',
+    appIconOutputDir: 'img/app-icons',
 };
 
 const initializeFlag = process.argv.includes('-init') || process.argv.includes('-initialize');
@@ -128,9 +131,10 @@ const silentUpdateFlag = process.argv.includes('-silent');
 const helpFlag = process.argv.includes('-help') || process.argv.includes('-h');
 const minifyFlag = process.argv.includes('-minify') || process.argv.includes('-m');
 const skipCompressedUploadFlag = process.argv.includes('-skipCompU') || process.argv.includes('-su');
-const disableStatisticsFlag = process.argv.includes('-nolog') || process.argv.includes('-nl');
-const generateFaviconsFlag = process.argv.includes('-genfavicons') || process.argv.includes('-gf');
-const generateIconsFlag = process.argv.includes('-genicons') || process.argv.includes('-gi');
+const disableStatisticsFlag = process.argv.includes('-noLog') || process.argv.includes('-nl');
+const generateFaviconsFlag = process.argv.includes('-genFavicons') || process.argv.includes('-gf');
+const generateIconsFlag = process.argv.includes('-genIcons') || process.argv.includes('-gi');
+const generateAppIconsFlag = process.argv.includes('-genAppIcons') || process.argv.includes('-ga');
 const localFlag = process.argv.includes('-l') || process.argv.includes('-local');
 
 function help() {
@@ -156,9 +160,9 @@ function help() {
         -forced <-p|-s|-l>      Forces the update (triggers a page reload after the new version is cached on the user's device), without notifying the user
         -silent <-p|-s|-l>      Performs a silent update which does not display the update notification and becomes active after the next page reload
         -su,-skipCompU          Skips image compression and upload of the compressed folder
-        -gf,-genfavicons        Creates favicons of all sizes from the original favicon and exits
-        -gi,-genicons           Creates icons of all sizes from the original icon and exits
-        
+        -gf,-genFavicons        Creates favicons of all sizes from the original favicon and exits
+        -gi,-genIcons           Creates icons of all sizes from the original icon and exits
+        -ga,-genAppIcons        Creates .icon from the original icon and exits
         Note: The database folder is uploaded, but not added to the cached files.
         `);
         exitPipeline();
@@ -224,6 +228,8 @@ const manifestIconFileName = config.manifestIconFileName;
 const manifestIconPath = config.manifestIconPath;
 const manifestIconOutputDir = config.manifestIconOutputDir;
 const manifestIconSizes = config.faviconSizes.length > 0 ? config.faviconSizes : [48, 72, 464, 3000];
+const appIconSourcePath = config.appIconSourcePath;
+const appIconOutputDir = config.appIconOutputDir;
 
 const fileTypeCounts = {};
 let fileTypeSizes = {};
@@ -270,6 +276,11 @@ async function main() {
 
     if (generateIconsFlag) {
         await generateImageSizes(manifestIconPath, manifestIconOutputDir, manifestIconFileName, manifestIconSizes);
+        exitPipeline();
+    }
+
+    if (generateAppIconsFlag) {
+        await generateAppIcons(appIconSourcePath, appIconOutputDir);
         exitPipeline();
     }
 
@@ -362,7 +373,7 @@ async function main() {
                 infoFlag && console.log('');
             }
 
-            console.log(chalk.green(`Build process to ${config.distPath} completed successfully.`));
+            console.log(chalk.green(`Build process to ${config.distPath} finished.`));
         } else {
             filesUploaded = await uploadFilesToServer(filesToCache, applicationPath) | 0;
         }
@@ -370,7 +381,7 @@ async function main() {
 
     console.log('');
     if ((productionFlag || stagingFlag || localFlag) && !deleteFlag && !rollbackFlag && (filesUploaded > 0 || localFlag)) {
-        console.log(chalk.green(`Release process of version ${version} completed successfully.`));
+        console.log(chalk.green(`${localFlag ? 'Build' : 'Release'} process of version ${version} completed successfully.`));
 
         if ((productionFlag || stagingFlag) && !deleteFlag && !rollbackFlag && config.postReleaseScripts.length > 0) {
             await runScriptsSequentially(config.postReleaseScripts)
@@ -1269,6 +1280,56 @@ async function generateImageSizes(inputPath, outputDir, fileName, sizes) {
     }
 
     console.log(chalk.green(`Images generated successfully`));
+    console.log('');
+}
+
+async function generateAppIcons(inputPath, outputDir) {
+    const sizes = [16, 24, 32, 48, 64, 128, 256, 512, 1024];
+    const fileName = path.basename(inputPath, path.extname(inputPath));
+
+    console.log(chalk.grey(`Generating "${fileName}" app icons...`));
+
+    if (!fs.existsSync(outputDir)) {
+        console.log(chalk.grey(`Creating output directory: ${outputDir}`));
+        fs.mkdirSync(outputDir, { recursive: true });
+    }
+    else {
+        infoFlag && console.log(chalk.grey(`Output directory already exists: ${outputDir}`));
+    }
+
+    const icoImages = [];
+    /* const icnsImages = []; */
+
+    for (const size of sizes) {
+        try {
+            infoFlag && console.log(`    Resizing image to ${size}x${size}...`);
+            const imgBuffer = await sharp(inputPath)
+                .resize(size, size)
+                .png()
+                .toBuffer();
+
+            if (size <= 256) {
+                icoImages.push(imgBuffer);
+            }
+
+            /* if ([16, 32, 48, 128, 256, 512, 1024].includes(size)) {
+                icnsImages.push({ size: `${size}x${size}`, data: imgBuffer });
+            } */
+        } catch (err) {
+            console.error(chalk.grey(`    Error resizing image to ${size}x${size}:`, err));
+        }
+    }
+
+    try {
+        console.log('Generating ICO...');
+        const ico = await toIco(icoImages);
+        console.log('Writing ICO to disk...');
+        fs.writeFileSync(path.join(outputDir, `${fileName}.ico`), ico);
+        console.log(chalk.green(`ICO generated successfully`));
+    } catch (err) {
+        console.error('Error generating ICO:', err);
+    }
+
     console.log('');
 }
 

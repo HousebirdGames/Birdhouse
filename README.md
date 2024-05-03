@@ -223,7 +223,9 @@ This setup automatically calls `pre-deploy-script.js` (located in the scripts fo
 - `-rollback` or `-r`: Rollback to the backup version of either staging (`-s`) or production (`-p`), when available on the server.
 - `-info` or `-i`: Display detailed information about the process.
 - `-skipCompU` or `-su`: Skips image compression and upload of the compressed folder, which is faster in some scenarios, where repeated uploads of the folder are not neccessary.
-- `-genfavicons` or `-gf`: Creates favicons of all specified (or the default) sizes from the original favicon and exits after that.
-- `-genicons` or `-gi`: Creates icons of all specified (or the default) sizes from the original icon and exits after that.
+- `-genFavicons` or `-gf`: Creates favicons of all specified (or the default) sizes from the original favicon and exits after that.
+- `-genIcons` or `-gi`: Creates icons of all specified (or the default) sizes from the original icon and exits after that.
+- `-genAppIcons` or `-ga`: Creates .icon (paths are configured in the pipeline-config.js) and exits after that.
+- `-noLog` or `-nl`: No statistics will be logged and added to the log file.
 
 The script automates various tasks, including version number updates, cache list generation, and file uploads to the server. Ensure you have the necessary permissions for file operations and SFTP server access.

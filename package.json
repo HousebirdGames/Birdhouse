@@ -1,15 +1,29 @@
 {
+  "name": "Birdhouse",
+  "version": "1.0.0",
+  "description": "",
+  "main": "electron-main.js",
   "scripts": {
     "start": "npm install && node pipeline -init",
     "pipeline": "node pipeline.js",
-    "serve": "node serve.js"
+    "serve": "node serve.js",
+    "server": "node start-server.js",
+    "server -findPort": "node start-server -findPort",
+    "electron": "npx electron .",
+    "package": "node package.js"
   },
   "dependencies": {
+    "express": "^4.19.2",
+    "net": "^1.0.2",
+    "portscanner": "^2.2.0"
+  },
+  "devDependencies": {
     "chalk": "^5.3.0",
     "chokidar": "^3.6.0",
     "clean-css": "^5.3.3",
     "dotenv": "^16.4.5",
-    "express": "^4.19.2",
+    "electron": "^30.0.2",
+    "electron-packager": "^17.1.2",
     "fast-glob": "^3.3.0",
     "imagemin": "^8.0.1",
     "imagemin-avif": "^0.1.4",
@@ -17,13 +31,16 @@
     "imagemin-pngquant": "^9.0.2",
     "imagemin-webp": "^8.0.0",
     "jsdom": "^24.0.0",
+    "mkdirp": "^1.0.4",
+    "ncp": "^2.0.0",
     "node": "^21.2.0",
     "node-html-parser": "^6.1.12",
     "nodemon": "^3.1.0",
-    "portscanner": "^2.2.0",
     "progress": "^2.0.3",
+    "rimraf": "^3.0.2",
     "sharp": "^0.33.2",
     "ssh2-sftp-client": "^10.0.3",
+    "to-ico": "^1.1.5",
     "uglify-js": "^3.17.4",
     "vm": "^0.1.0"
   }

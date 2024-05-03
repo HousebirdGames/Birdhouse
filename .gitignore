@@ -1,6 +1,8 @@
 node_modules
 minified
 temp
+build-temp
+builds
 backup
 pipeline-log.txt
 config-sw.js

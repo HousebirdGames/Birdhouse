@@ -9,6 +9,15 @@ import { initializeInputValidation } from '../../Birdhouse/src/modules/input-val
 import { } from '../../everywhere.js';
 import config from '../../config.js';
 
+
+/**
+ * Signals if the app is running in standalone mode through Electron.
+ * 
+ * 
+ * @type {boolean}
+ */
+export const standalone = navigator.userAgent.includes('Electron');
+
 /**
  * A reference to the popup manager instance used throughout the application.
  * 
@@ -569,10 +578,10 @@ export async function handleRouteChange() {
 
     isHandlingRouteChange = true;
 
+    await window.triggerHook('on-handle-route-change');
+
     removeAllComponentCSS();
     unmountActions();
-
-    await window.triggerHook('on-handle-route-change');
 
     if (config.enableInfoBar) {
         const infoBar = document.getElementById('infoBar');
@@ -659,9 +668,11 @@ export async function handleRouteChange() {
         if (redirect404ToRoot) {
             window.location.replace(`${urlPrefix}/`);
         } else if (content) {
+            updateTitleAndMeta('Oups');
             content.innerHTML = oupsContent;
         }
     } else {
+        updateTitleAndMeta();
         if (content) {
             try {
                 let contentHTML = '';
@@ -826,7 +837,6 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await addAdminButtons();
 
-    updateTitleAndMeta();
     handleRouteChange();
     textareaResizer();
 
