@@ -40,6 +40,7 @@ const { parse } = require('node-html-parser');
 const { exec } = require('child_process');
 const util = require('util');
 const toIco = require('to-ico');
+const { loadConfig } = require('./package.js');
 
 const execAsync = util.promisify(exec);
 
@@ -86,6 +87,7 @@ const defaultConfig = {
     userLoginEnabled: false,
     redirect404ToRoot: false,
     appIcon: 'img/app-icons/icon',
+    trustedImageDomains: [],
 };
 
 const defaultPipelineConfig = {
@@ -390,6 +392,10 @@ async function main() {
                     console.log('');
                 })
                 .catch(error => console.error('An error occurred during post release script execution:', error));
+        }
+
+        if (localFlag) {
+            loadConfig();
         }
     }
     else {

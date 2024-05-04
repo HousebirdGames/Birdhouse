@@ -1,6 +1,6 @@
 {
   "name": "Birdhouse",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "",
   "main": "electron-main.js",
   "scripts": {
@@ -8,9 +8,9 @@
     "pipeline": "node pipeline.js",
     "serve": "node serve.js",
     "server": "node start-server.js",
-    "server -findPort": "node start-server -findPort",
+    "server-f": "node start-server -findPort",
     "electron": "npx electron .",
-    "package": "node package.js"
+    "package": "node start-package.js"
   },
   "dependencies": {
     "express": "^4.19.2",

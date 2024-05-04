@@ -4,17 +4,18 @@ const path = require('path');
 const vm = require('vm');
 const fs = require('fs');
 
-async function createWindow() {
-    const configFilePath = path.join(__dirname, 'dist', 'config-sw.js');
-    const configFileCode = fs.readFileSync(configFilePath, 'utf8');
+server.start(true);
 
-    const sandbox = { self: {} };
-    vm.createContext(sandbox);
-    vm.runInContext(configFileCode, sandbox);
-    const config = sandbox.self.config;
+async function createWindow() {
+    const configFilePath = path.join(__dirname, 'dist', 'config.json');
+    const configFileContent = fs.readFileSync(configFilePath, 'utf8');
+    const config = JSON.parse(configFileContent);
     const iconPath = path.join(__dirname, 'dist', config.appIcon + '.ico');
 
     console.log(`Icon: ${iconPath}`);
+
+    const trustedImageDomains = config.trustedImageDomains.join(' ');
+    const contentSecurityPolicy = `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' ${trustedImageDomains}; object-src 'none'; base-uri 'self'; frame-src 'none';`;
 
     const mainWindow = new BrowserWindow({
         width: 800,
@@ -25,7 +26,7 @@ async function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            contentSecurityPolicy: "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self'; object-src 'none'; base-uri 'self'; frame-src 'none';"
+            contentSecurityPolicy
         },
         icon: iconPath,
     });

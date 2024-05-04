@@ -32,25 +32,17 @@ const projectRoot = path.resolve(__dirname, '..');
 const lockFilePath = path.join(projectRoot, 'Birdhouse/pipeline.lock');
 const defaultPort = 4200;
 let isBuilding = false;
-let serverProcess = null;
 
-function startServer(port = defaultPort) {
-    if (serverProcess) {
-        console.log('Stopping the current server...');
-        serverProcess.kill('SIGTERM');
+const server = require('./server');
+
+async function startServer(port = defaultPort) {
+    if (server && server.close) {
+        server.close();
     }
 
     console.log(`Starting the server on port ${port}...`);
-    serverProcess = spawn('node', ['server.js', port], {
-        cwd: path.join(projectRoot, 'Birdhouse'),
-        stdio: 'inherit'
-    });
-
-    serverProcess.on('close', (code) => {
-        if (code !== null) {
-            console.log(`Server process exited with code ${code}`);
-        }
-    });
+    server.port = port;
+    server.start();
 }
 
 const runPipelineAndRestartServer = () => {
@@ -99,7 +91,6 @@ const runPipelineAndRestartServer = () => {
     pipeline.on('close', (code) => {
         isBuilding = false;
         if (code === 0) {
-            console.log('Restarting...');
             startServer(port);
         } else {
             console.error(`Build failed with exit code ${code}`);
