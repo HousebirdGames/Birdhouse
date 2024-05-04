@@ -1,3 +1,10 @@
+/*
+This feature is in an experimental state and may not be suitable for all use cases. Please use with caution and report any issues you encounter.
+
+
+This Node.js script, provides the Electron packaging functionality for Birdhouse.
+*/
+
 const fs = require('fs-extra');
 const path = require('path');
 const vm = require('vm');
