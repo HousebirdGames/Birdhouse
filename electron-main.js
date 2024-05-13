@@ -1,7 +1,16 @@
+/*
+This file, electron-main.js, serves as the main entry point for an Electron application.
+It is still in an experimental phase and should not be used in production.
+
+
+Electron is a framework that allows for the development of desktop applications using web technologies like HTML, CSS, and JavaScript.
+The main process, which is initiated by this file, can create and manage BrowserWindow instances, handle system events, and control
+the application's lifecycle.
+*/
+
 const { app, BrowserWindow, Menu, shell } = require('electron');
 const server = require('./server');
 const path = require('path');
-const vm = require('vm');
 const fs = require('fs');
 
 server.start(true);

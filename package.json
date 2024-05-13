@@ -14,7 +14,6 @@
   },
   "dependencies": {
     "express": "^4.19.2",
-    "net": "^1.0.2",
     "portscanner": "^2.2.0"
   },
   "devDependencies": {

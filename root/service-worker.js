@@ -1,7 +1,7 @@
 /*
 The service worker is a fundamental component for enabling a progressive web app to operate offline.
-By caching essential files listed in the filesToCache.js script—automatically generated during the
-project's build process—it ensures that these files are available from the cache when no network
+By caching essential files listed in the filesToCache.js script — automatically generated during the
+project's build process — it ensures that these files are available from the cache when no network
 connection is available.
 
 
