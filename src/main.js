@@ -125,6 +125,7 @@ export function debounce(func, wait) {
     };
 }
 
+let textareaResizerAdded = false;
 const actions = [];
 
 /**
@@ -204,6 +205,8 @@ export function setupActions() {
  * After all event listeners are removed, the action list is cleared.
  */
 export function unmountActions() {
+    textareaResizerAdded = false;
+
     for (const action of actions) {
         if (typeof action !== 'function') {
             let containers;
@@ -690,8 +693,9 @@ export async function handleRouteChange() {
 
     await window.triggerHook('on-content-loaded');
 
-    await window.triggerHook('before-actions-setup');
+    textareaResizer();
 
+    await window.triggerHook('before-actions-setup');
     setupActions();
 
     await window.triggerHook('on-actions-setup');
@@ -838,7 +842,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     await addAdminButtons();
 
     handleRouteChange();
-    textareaResizer();
 
     window.addEventListener('popstate', () => handleRouteChange());
 
@@ -1267,8 +1270,6 @@ export async function getMenuHTML() {
         return await generateMenuHTML('public');
     }
 }
-
-let textareaResizerAdded = false;
 
 function textareaResizer() {
     if (!textareaResizerAdded) {
