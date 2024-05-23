@@ -704,11 +704,13 @@ export async function handleRouteChange() {
 
     textareaResizer();
 
-    action({
-        type: 'scroll',
-        handler: storeScrollPosition,
-        debounce: 100
-    });
+    if (config.scrollPositionRecallLimit > 0) {
+        action({
+            type: 'scroll',
+            handler: storeScrollPosition,
+            debounce: 100
+        });
+    }
 
     await window.triggerHook('before-actions-setup');
     setupActions();
@@ -803,8 +805,9 @@ export async function handleRouteChange() {
  * 
  * 
  * It also will try to restore the scroll position if the hash is empty or no element with a matching ID is found.
- * The scroll position is stored in a map with the current path as the key. If the map exceeds 20 entries, the oldest
- * entry is removed.
+ * The scroll position is stored in a map with the current path as the key. If the map exceeds 20 entries (default),
+ * the oldest entry is removed. You can adjust the limit by setting the `scrollPositionRecallLimit` property in
+ * the config file. Setting it to 0 will disable scroll position recall.
  * 
  * 
  * If no hash is present in the URL, or if no element with a matching ID is found, the page scrolls to the top.
@@ -833,6 +836,10 @@ function restoreScrollPosition() {
 }
 
 function storeScrollPosition() {
+    if (config.scrollPositionRecallLimit <= 0) {
+        return;
+    }
+
     const currentPath = window.location.pathname;
     const currentScrollY = window.scrollY;
 
