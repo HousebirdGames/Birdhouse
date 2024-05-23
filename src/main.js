@@ -58,6 +58,8 @@ export let dynamicRoute = false;
 
 const redirect404ToRoot = config.redirect404ToRoot != undefined ? config.redirect404ToRoot : false;
 
+let scrollPositions = new Map();
+
 const anchorScrollOffset = 54;
 
 /**
@@ -702,6 +704,12 @@ export async function handleRouteChange() {
 
     textareaResizer();
 
+    action({
+        type: 'scroll',
+        handler: storeScrollPosition,
+        debounce: 100
+    });
+
     await window.triggerHook('before-actions-setup');
     setupActions();
 
@@ -794,6 +802,11 @@ export async function handleRouteChange() {
  * like headers.
  * 
  * 
+ * It also will try to restore the scroll position if the hash is empty or no element with a matching ID is found.
+ * The scroll position is stored in a map with the current path as the key. If the map exceeds 20 entries, the oldest
+ * entry is removed.
+ * 
+ * 
  * If no hash is present in the URL, or if no element with a matching ID is found, the page scrolls to the top.
  */
 export function scroll() {
@@ -807,11 +820,31 @@ export function scroll() {
             });
         }
         else {
-            window.scrollTo(0, 0);
+            restoreScrollPosition();
         }
     }
     else {
-        window.scrollTo(0, 0);
+        restoreScrollPosition();
+    }
+}
+
+function restoreScrollPosition() {
+    window.scrollTo(0, scrollPositions.get(window.location.pathname) || 0);
+}
+
+function storeScrollPosition() {
+    const currentPath = window.location.pathname;
+    const currentScrollY = window.scrollY;
+
+    if (scrollPositions.has(currentPath)) {
+        scrollPositions.delete(currentPath);
+    }
+
+    scrollPositions.set(currentPath, currentScrollY);
+
+    if (scrollPositions.size > 20) {
+        const oldestKey = scrollPositions.keys().next().value;
+        scrollPositions.delete(oldestKey);
     }
 }
 
