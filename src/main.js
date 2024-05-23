@@ -988,6 +988,7 @@ function failedToLoadComponent() {
 }
 
 let linkClickListener;
+let blockDefaultClick = false;
 function addLinkListeners() {
     if (linkClickListener) {
         document.body.removeEventListener(defaultClickEvent, linkClickListener);
@@ -997,6 +998,8 @@ function addLinkListeners() {
         if (!event.target || !event.target.tagName) {
             return;
         }
+
+        blockDefaultClick = false;
 
         let linkElement;
 
@@ -1015,6 +1018,7 @@ function addLinkListeners() {
                 history.pushState(null, '', window.location.pathname + href);
                 scroll();
                 event.preventDefault();
+                blockDefaultClick = true;
                 return;
             }
 
@@ -1034,11 +1038,19 @@ function addLinkListeners() {
             }
 
             event.preventDefault();
+            blockDefaultClick = true;
             goToRoute(href);
         }
     };
 
     document.body.addEventListener(defaultClickEvent, linkClickListener);
+    if (config.useMouseDown) {
+        document.body.addEventListener('click', (event) => {
+            if (blockDefaultClick) {
+                event.preventDefault();
+            }
+        })
+    }
 }
 
 function assignInstallButton() {
