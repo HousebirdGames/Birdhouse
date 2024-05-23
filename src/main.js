@@ -365,7 +365,7 @@ function constructRoute(type, slug, name, materialIcon, componentPath, inMenu, d
     };
 }
 
-if (config.enableImageComparisonSliders) {
+if (config.enableImageComparisonSliders ?? false) {
     loadCSS(urlPrefix + '/Birdhouse/src/modules/image-comparison-slider/image-comparison-slider.css');
 }
 
@@ -774,7 +774,7 @@ export async function handleRouteChange() {
         alertPopup(messageTitle, `<p>${message}</p>`);
     }
 
-    if (config.enableImageComparisonSliders) {
+    if (config.enableImageComparisonSliders ?? false) {
         try {
             const module = await import(urlPrefix + '/Birdhouse/src/modules/image-comparison-slider/image-comparison-slider.js');
             module.initImageComparisons();
@@ -842,7 +842,7 @@ function storeScrollPosition() {
 
     scrollPositions.set(currentPath, currentScrollY);
 
-    if (scrollPositions.size > 20) {
+    if (scrollPositions.size > config.scrollPositionRecallLimit ?? 20) {
         const oldestKey = scrollPositions.keys().next().value;
         scrollPositions.delete(oldestKey);
     }

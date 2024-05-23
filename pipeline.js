@@ -89,6 +89,7 @@ const defaultConfig = {
     appIcon: 'img/app-icons/icon',
     trustedImageDomains: [],
     useMouseDown: false,
+    scrollPositionRecallLimit: 20,
 };
 
 const defaultPipelineConfig = {
