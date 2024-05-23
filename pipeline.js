@@ -88,6 +88,7 @@ const defaultConfig = {
     redirect404ToRoot: false,
     appIcon: 'img/app-icons/icon',
     trustedImageDomains: [],
+    useMouseDown: false,
 };
 
 const defaultPipelineConfig = {

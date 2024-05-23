@@ -9,6 +9,13 @@ import { initializeInputValidation } from '../../Birdhouse/src/modules/input-val
 import { } from '../../everywhere.js';
 import config from '../../config.js';
 
+/**
+ * The default event to use for click events. Defaults to click, but can be set to "mousedown" in the config file with the useMouseDown property.
+ * 
+ * 
+ * @type {string}
+ */
+export const defaultClickEvent = config.useMouseDown ? 'mousedown' : 'click';
 
 /**
  * Signals if the app is running in standalone mode through Electron.
@@ -940,13 +947,6 @@ document.addEventListener("DOMContentLoaded", async () => {
         footer.classList.add('hideOnSmallScreen');
     }
 
-    const resetPopupButton = document.getElementById("resetPopupButton");
-    if (resetPopupButton) {
-        resetPopupButton.addEventListener('click', () => {
-            popupManager.openPopup("resetSavePopup");
-        });
-    }
-
     if (getCookie("storageAcknowledgement") === 'true' || getSessionStorageItem('denyStorage')) {
         popupManager.closePopup("storageAcknowledgementPopup");
     }
@@ -990,7 +990,7 @@ function failedToLoadComponent() {
 let linkClickListener;
 function addLinkListeners() {
     if (linkClickListener) {
-        document.body.removeEventListener('click', linkClickListener);
+        document.body.removeEventListener(defaultClickEvent, linkClickListener);
     }
 
     linkClickListener = async function (event) {
@@ -1038,7 +1038,7 @@ function addLinkListeners() {
         }
     };
 
-    document.body.addEventListener('click', linkClickListener);
+    document.body.addEventListener(defaultClickEvent, linkClickListener);
 }
 
 function assignInstallButton() {
@@ -1062,14 +1062,14 @@ function assignInstallButton() {
                     } else {
                         //console.log('User dismissed the install prompt');
                         const installButton = document.getElementById('installButton');
-                        installButton.addEventListener('click', handleInstallButtonClick, { once: true });
+                        installButton.addEventListener(defaultClickEvent, handleInstallButtonClick, { once: true });
                     }
                     installPrompt = null;
                 });
             }
         }
 
-        installButton.addEventListener('click', handleInstallButtonClick);
+        installButton.addEventListener(defaultClickEvent, handleInstallButtonClick);
 
         installButton.addEventListener('animationend', () => {
             installButton.style.animation = '';
@@ -1110,7 +1110,7 @@ function showUpdateNotes(force = false) {
                     button.classList.add('active');
                 }
 
-                button.addEventListener("click", () => {
+                button.addEventListener(defaultClickEvent, () => {
                     updateContent.querySelector("h3").textContent = `${patch.title ? `${patch.title}` : `Version ${patch.version}`}`;
                     updateContent.querySelector("h4").textContent = `${patch.title ? `Version ${patch.version}` : ``}`;
                     document.getElementById("updateNotesList").innerHTML = patch.notes
@@ -1155,7 +1155,7 @@ function initializeCookiesAndStoragePopupButtons() {
     const openAcknowledgementButtons = document.querySelectorAll(".openAcknowledgementButton");
     if (openAcknowledgementButtons) {
         openAcknowledgementButtons.forEach(openAcknowledgementButton => {
-            openAcknowledgementButton.addEventListener("click", () => {
+            openAcknowledgementButton.addEventListener(defaultClickEvent, () => {
                 popupManager.openPopup("storageAcknowledgementPopup");
             });
         });
@@ -1908,7 +1908,7 @@ export function alertPopupClose(addedClass = null) {
 export function assignMenuButton() {
     const menuButton = document.querySelector("button#menuButton");
     if (menuButton) {
-        menuButton.addEventListener("click", () => {
+        menuButton.addEventListener(defaultClickEvent, () => {
             popupManager.openPopup("menu");
         });
     }
