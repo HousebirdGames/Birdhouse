@@ -42,10 +42,17 @@ async function startServer(port = defaultPort) {
 
     console.log(`Starting the server on port ${port}...`);
     server.port = port;
-    server.start();
+    server.start(true);
 }
 
-const runPipelineAndRestartServer = () => {
+const runPipelineAndRestartServer = (filePath) => {
+    if (filePath == null) {
+        console.log('Initial build...');
+    }
+    else {
+        console.log(`File changed: ${filePath}`);
+    }
+
     if (fs.existsSync(lockFilePath)) {
         return;
     }
@@ -103,9 +110,9 @@ const watcher = chokidar.watch(projectRoot, {
     ignoreInitial: true
 });
 
-watcher.on('change', runPipelineAndRestartServer);
-watcher.on('add', runPipelineAndRestartServer);
+watcher.on('change', (path) => runPipelineAndRestartServer(path));
+watcher.on('add', (path) => runPipelineAndRestartServer(path));
 
-runPipelineAndRestartServer();
+runPipelineAndRestartServer(null);
 
 console.log('Watching for file changes in the project root...');
