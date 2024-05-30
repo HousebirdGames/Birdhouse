@@ -182,7 +182,7 @@ if (!initializeFlag) {
     try {
         config = require('../pipeline-config.js');
     } catch (error) {
-        console.log(chalk.red(`Error loading pipeline - config.js: ${error.message}`));
+        console.log(`Error loading pipeline - config.js: ${error.message}`);
         process.exit(1);
     }
 
@@ -191,7 +191,7 @@ if (!initializeFlag) {
         try {
             sftpConfigFile = require(sftpConfigFilePath);
         } catch (error) {
-            console.log(chalk.red(`Error loading sftp config file(${sftpConfigFilePath}): ${error.message}`));
+            console.log(`Error loading sftp config file(${sftpConfigFilePath}): ${error.message}`);
             process.exit(1);
         }
     }
