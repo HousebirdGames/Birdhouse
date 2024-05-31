@@ -140,16 +140,29 @@ const actions = [];
 /**
  * Registers an action to be executed. Actions can either be functions to be executed directly,
  * or objects defining more complex behavior such as event listening.
- * 
+ *
  * 
  * If an action object is provided, it can specify a debounce period, an event type, a selector to
- * delegate events, the container which the delegate listener is added to, and a handler function.
+ * delegate events, the container where the delegate listener is added to, and a handler function.
+ *
  * 
+ * Examples:
+ *
+ * {type: 'click', selector: 'button.buttonClass', handler: ()=>{console.log('You clicked on a button.');} }
+ * 
+ * {type: 'click', selector: 'button.buttonClass', handler: ()=>{console.log('You clicked on a button in the body.');}, container: 'body' }
+ * 
+ * {type: 'mouseover', container: 'header', handler: ()=>{console.log('Mouse is over header.');} }
+ * 
+ * {type: 'scroll', handler: ()=>{console.log('Scroll event on the document.');} }
+ * 
+ * {type: 'click', selector: 'div', handler: (e) => console.log('Clicked a div in the main container.'), container: 'main'}
+ *
  * 
  * If the action is a function, it is simply added to the action queue to be executed after the components are loaded.
+ *
  * 
- * 
- * For examples of how to use the action system, see the example component (Birdhouse/root_EXAMPLE/src/components/example.js).
+ * For examples of how to use the action system, you can also see the example component (Birdhouse/root_EXAMPLE/src/components/example.js).
  *
  * @param {Function|Object} action - The action to register. If an object, it should contain at least `type` and `handler` properties.
  */
@@ -164,8 +177,10 @@ export function action(action) {
 
         const eventHandler = (event) => {
             if (action.selector) {
-                if (event.target.matches(action.selector)) {
+                if (event.target instanceof Element && event.target.matches(action.selector)) {
                     handler(event);
+                } else {
+                    console.warn('Event target does not match selector (maybe you wanted to use the \'container\' property?):', action.selector);
                 }
             } else {
                 handler(event);
