@@ -179,8 +179,8 @@ export function action(action) {
             if (action.selector) {
                 if (event.target instanceof Element && event.target.matches(action.selector)) {
                     handler(event);
-                } else {
-                    console.warn('Event target does not match selector (maybe you wanted to use the \'container\' property?):', action.selector);
+                } else if (!event.target instanceof Element) {
+                    console.warn('Event target does not match selector (maybe you wanted to use the \'container\' property?):', action);
                 }
             } else {
                 handler(event);

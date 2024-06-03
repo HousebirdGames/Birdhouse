@@ -106,7 +106,7 @@ const runPipelineAndRestartServer = (filePath) => {
 };
 
 const watcher = chokidar.watch(projectRoot, {
-    ignored: [path.join(projectRoot, 'Birdhouse/**'), /(^|[\/\\])\../],
+    ignored: [path.join(projectRoot, 'Birdhouse/**'), path.join(projectRoot, '**/node_modules'), /(^|[\/\\])\../],
     ignoreInitial: true
 });
 
