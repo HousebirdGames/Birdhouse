@@ -144,11 +144,14 @@ const actions = [];
  * 
  * If an action object is provided, it can specify a debounce period, an event type, a selector to
  * delegate events, the container where the delegate listener is added to, and a handler function.
+ * 
+ * 
+ * If type is not specified, it defaults to the default click event (mousedown or click, depending on the config).
  *
  * 
  * Examples:
  *
- * {type: 'click', selector: 'button.buttonClass', handler: ()=>{console.log('You clicked on a button.');} }
+ * {selector: 'button.buttonClass', handler: ()=>{console.log('You clicked on a button.');} }
  * 
  * {type: 'click', selector: 'button.buttonClass', handler: ()=>{console.log('You clicked on a button in the body.');}, container: 'body' }
  * 
@@ -212,8 +215,10 @@ export function setupActions() {
                 containers = [document];
             }
 
+            const type = action.type ?? defaultClickEvent;
+            console.log('Setting up action:', action, defaultClickEvent);
             containers.forEach(container => {
-                container.addEventListener(action.type, action.handler, action.passive ? { passive: true } : { passive: false });
+                container.addEventListener(type, action.handler, action.passive ? { passive: true } : { passive: false });
             });
         }
     }
