@@ -216,7 +216,6 @@ export function setupActions() {
             }
 
             const type = action.type ?? defaultClickEvent;
-            console.log('Setting up action:', action, defaultClickEvent);
             containers.forEach(container => {
                 container.addEventListener(type, action.handler, action.passive ? { passive: true } : { passive: false });
             });
@@ -282,6 +281,66 @@ export function sanitizeIdentifier(identifier) {
 }
 
 /**
+ * Creates a route for the application based on the provided data object. This function supports creating
+ * admin, user, and public routes. It dynamically determines the route type and calls the appropriate
+ * function to handle the creation.
+ * 
+ * 
+ * Example usage to create a public route:
+ * 
+ * const publicRoute = {
+ * 
+ *   slug: '/home',
+ *   name: 'Home',
+ *   materialIcon: 'home',
+ *   componentPath: 'components/Home',
+ *   inMenu: true,
+ *   data: { key: 'value' },
+ *   displayFull: true,
+ *   dynamic: false,
+ *   type: 'public'
+ * 
+ * };
+ * 
+ * await createRoute(publicRoute);
+ * 
+ * @param {Object} route An object containing the route details.
+ * @param {string} route.type The type of the route ('admin', 'user', or 'public').
+ * @param {string} route.slug The URL slug for the route.
+ * @param {string} route.name The display name for the route.
+ * @param {string} route.componentPath The path to the component that should be loaded for this route.
+ * @param {string} [route.materialIcon=''] The Material icon identifier for the route.
+ * @param {boolean} [route.inMenu=true] Whether this route should be included in the navigation menu.
+ * @param {Object|null} [route.data=null] Optional data to pass to the route's component.
+ * @param {boolean} [route.displayFull=true] Whether to display the route with text in navigation contexts.
+ * @param {boolean} [route.dynamic=false] Whether the route is dynamically generated.
+ * @throws {Error} Throws an error if an unsupported route type is provided.
+ * @returns {Promise<void>} A promise that resolves when the route has been created.
+ */
+export async function createRoute({
+    type,
+    slug,
+    name,
+    componentPath,
+    materialIcon = '',
+    inMenu = true,
+    data = null,
+    displayFull = true,
+    dynamic = false
+}) {
+    switch (type) {
+        case 'admin':
+            return await createAdminRoute(slug, name, materialIcon, componentPath, inMenu, data, displayFull, dynamic);
+        case 'user':
+            return await createUserRoute(slug, name, materialIcon, componentPath, inMenu, data, displayFull, dynamic);
+        case 'public':
+            return createPublicRoute(slug, name, materialIcon, componentPath, inMenu, data, displayFull, dynamic);
+        default:
+            throw new Error(`Unsupported route type: ${type}`);
+    }
+}
+
+/**
  * Creates an admin route for the application. This function is essential for dynamically
  * adding admin interfaces and ensuring that they are visible only to users with the appropriate permissions.
  *
@@ -303,10 +362,12 @@ export async function createAdminRoute(slug, name, materialIcon, componentPath, 
     if (overwrittenNotAuthorizedPageContent == null) {
         overwrittenNotAuthorizedPageContent = `
                 <div class="contentBox accent center fitContent"><h2>You are not authorized to access this page</h2>
-                <div class="linkRow">
-                <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
-                <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
-                </div></div>`;
+                    <div class="linkRow">
+                        <a href="${urlPrefix}/login" class="button"><span class="material-icons spaceRight">person</span>Login</a>
+                        <a href="${urlPrefix}/registration" class="button highlight"><span class="material-icons spaceRight">task_alt</span>Register</a>
+                    </div>
+                </div>
+                `;
     }
 
     const route = constructRoute('admin', slug, name, materialIcon, componentPath, inMenu, data, dynamic, displayFull,
