@@ -1158,6 +1158,10 @@ function addLinkListeners() {
                 return;
             }
 
+            if (event.button === 1) {
+                return;
+            }
+
             event.preventDefault();
             blockDefaultClick = true;
             goToRoute(href);
