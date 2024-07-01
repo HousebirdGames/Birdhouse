@@ -80,7 +80,7 @@ window.hook('get-popup-menu-html', async function (menuHTML) {
             <br>
             ${menuHTML}
             <br>
-			<button class="closePopup menu"><span class="material-icons md-light spaceRight">close</span>Close</button>
+			<button class="closePopup menu" title="Close Menu"><span class="material-icons md-light spaceRight">close</span>Close</button>
 		</div>
 	</div>
     `;

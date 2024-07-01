@@ -590,7 +590,7 @@ async function generateMenuHTML(routeType) {
 
     html = await window.triggerHook('generate-menu-html', menuItems) || menuItems.map(item => {
         return `
-        <a href="${item.path}"><span class="material-icons">${item.materialIcon}</span>${item.displayFull ? item.name : ''}</a>
+        <a href="${item.path}" title="${item.name ?? ''}"><span class="material-icons">${item.materialIcon}</span>${item.displayFull ? item.name : ''}</a>
         `;
     }).join('');
 
@@ -866,7 +866,7 @@ export async function handleRouteChange() {
         }
     }
 
-    assignInstallButton();
+    assignInstallButtons();
 
     requestAnimationFrame(() => {
         requestAnimationFrame(() => {
@@ -939,7 +939,7 @@ function storeScrollPosition() {
 let deferredPrompt = null;
 window.addEventListener('beforeinstallprompt', (e) => {
     deferredPrompt = e;
-    assignInstallButton();
+    assignInstallButtons();
 });
 
 document.addEventListener("DOMContentLoaded", async () => {
@@ -1034,7 +1034,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     await window.triggerHook('after-adding-base-content', menuHTML);
 
-    assignMenuButton();
+    assignMenuButtons();
 
     const clearButton = document.getElementById("clearButton");
     if (clearButton) {
@@ -1178,46 +1178,56 @@ function addLinkListeners() {
     }
 }
 
-function assignInstallButton() {
+function assignInstallButtons() {
     if (deferredPrompt == null) {
         return;
     }
 
-    const installButton = document.getElementById('installButton');
-    if (installButton) {
+    const installButtons = document.querySelectorAll('#installButton, .installButton');
+    if (installButtons.length > 0) {
         let installPrompt = deferredPrompt;
-        installButton.style.display = 'flex';
+        installButtons.forEach(button => button.style.display = 'flex');
 
         function handleInstallButtonClick(e) {
             if (installPrompt) {
                 installPrompt.prompt();
                 installPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
-                        //console.log('User accepted the install prompt');
                         alertPopup(`Thank you for installing ${config.pageTitle} on your device`);
                         Analytics('Installed PWA');
                     } else {
-                        //console.log('User dismissed the install prompt');
-                        const installButton = document.getElementById('installButton');
-                        installButton.addEventListener(defaultClickEvent, handleInstallButtonClick, { once: true });
+                        installButtons.forEach(button => {
+                            button.removeEventListener(defaultClickEvent, handleInstallButtonClick);
+                            button.addEventListener(defaultClickEvent, handleInstallButtonClick, { once: true });
+                        });
                     }
                     installPrompt = null;
                 });
             }
         }
 
-        installButton.addEventListener(defaultClickEvent, handleInstallButtonClick);
+        function handleAnimationEnd() {
+            this.style.animation = '';
+        }
 
-        installButton.addEventListener('animationend', () => {
-            installButton.style.animation = '';
+        installButtons.forEach(button => {
+            button.removeEventListener(defaultClickEvent, handleInstallButtonClick);
+            button.removeEventListener('animationend', handleAnimationEnd);
+
+            button.addEventListener(defaultClickEvent, handleInstallButtonClick);
+            button.addEventListener('animationend', handleAnimationEnd);
         });
 
-        window.addEventListener('appinstalled', () => {
-            console.log("App installed");
-            installButton.style.display = 'none';
-            installPrompt = null;
-        });
+        window.removeEventListener('appinstalled', handleAppInstalled);
+        window.addEventListener('appinstalled', handleAppInstalled);
     }
+}
+
+function handleAppInstalled() {
+    console.log("App installed");
+    const installButtons = document.querySelectorAll('#installButton, .installButton');
+    installButtons.forEach(button => button.style.display = 'none');
+    installPrompt = null;
 }
 
 function showUpdateNotes(force = false) {
@@ -2035,20 +2045,27 @@ export function alertPopupClose(addedClass = null) {
 }
 
 /**
- * Assigns a click event listener to the menu button. This function is part of the popup management
- * system and ensures that clicking the menu button opens the corresponding popup.
+ * Assigns click event listeners to menu buttons. This function is part of the popup management
+ * system and ensures that clicking any menu button opens the corresponding popup.
+ * 
+ * 
+ * The function targets buttons with either the ID 'menuButton' or the class 'openMenuButton'.
  * 
  * 
  * This function is typically called automatically when the page loads, but might need to be called
- * manually, when the button is added dynamically or when the button is replaced.
+ * manually when buttons are added dynamically or when existing buttons are replaced.
  */
-export function assignMenuButton() {
-    const menuButton = document.querySelector("button#menuButton");
-    if (menuButton) {
-        menuButton.addEventListener(defaultClickEvent, () => {
-            popupManager.openPopup("menu");
-        });
-    }
+export function assignMenuButtons() {
+    const menuButtons = document.querySelectorAll("#menuButton, .openMenuButton");
+
+    menuButtons.forEach(menuButton => {
+        menuButton.removeEventListener(defaultClickEvent, handleMenuClick);
+        menuButton.addEventListener(defaultClickEvent, handleMenuClick);
+    });
+}
+
+function handleMenuClick() {
+    popupManager.openPopup("menu");
 }
 
 async function addAdminButtons() {
