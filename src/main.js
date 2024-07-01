@@ -208,16 +208,13 @@ export function setupActions() {
         if (typeof action === 'function') {
             action();
         } else {
-            let containers;
-            if (action.container) {
-                containers = Array.from(document.querySelectorAll(action.container));
-            } else {
-                containers = [document];
-            }
+            let containers = action.container
+                ? Array.from(document.querySelectorAll(action.container))
+                : [document];
 
             const type = action.type ?? defaultClickEvent;
             containers.forEach(container => {
-                container.addEventListener(type, action.handler, action.passive ? { passive: true } : { passive: false });
+                container.addEventListener(type, action.handler, getEventOptions(action));
             });
         }
     }
@@ -237,20 +234,22 @@ export function unmountActions() {
 
     for (const action of actions) {
         if (typeof action !== 'function') {
-            let containers;
-            if (action.container) {
-                containers = Array.from(document.querySelectorAll(action.container));
-            } else {
-                containers = [document];
-            }
+            let containers = action.container
+                ? Array.from(document.querySelectorAll(action.container))
+                : [document];
 
+            const type = action.type ?? defaultClickEvent;
             containers.forEach(container => {
-                container.removeEventListener(action.type, action.handler);
+                container.removeEventListener(type, action.handler, getEventOptions(action));
             });
         }
     }
 
     actions.length = 0;
+}
+
+function getEventOptions(action) {
+    return action.passive ? { passive: true } : { passive: false };
 }
 
 /**
