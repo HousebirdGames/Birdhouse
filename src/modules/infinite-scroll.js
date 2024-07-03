@@ -154,7 +154,7 @@ export default function InfiniteScroll(config) {
     function displayOfflineMessage() {
         removeLoadingSymbol();
         if (container.innerHTML.trim() === '') {
-            const messageHtml = `<div class="no-items-message">You are offline and nothing was cached yet</div>`;
+            const messageHtml = `<div class="no-items-message">Offline with no cached content available</div>`;
             container.innerHTML = messageHtml;
         }
     }
