@@ -20,6 +20,8 @@ integrates with local or session storage for caching purposes.
  * 
  * - container: DOM element to append fetched items to.
  * 
+* - scrollContainer: DOM element to attach the scroll event listener to, which will trigger the loading of more content when the user scrolls to the bottom.
+ * 
  * - fetchURL: URL to fetch data from.
  * 
  * - displayFunction: Function to process and display fetched items.
@@ -39,6 +41,7 @@ export default function InfiniteScroll(config) {
     let limit, page;
     let handleScrollDebounced = debounce(handleScroll, 200);
     let container = config.container;
+    let scrollContainer = config.scrollContainer || window;
     let fetchURL = config.fetchURL;
     let displayFunction = config.displayFunction;
     let searchParameter = config.searchParameter || (() => '');
@@ -164,8 +167,13 @@ export default function InfiniteScroll(config) {
     async function handleScroll(force = false) {
         if (isLoading) return;
 
-        const rect = container.getBoundingClientRect();
-        const isAtBottom = (rect.bottom <= window.innerHeight + 2000);
+        let isAtBottom;
+        if (scrollContainer === window) {
+            const rect = container.getBoundingClientRect();
+            isAtBottom = (rect.bottom <= window.innerHeight + 2000);
+        } else {
+            isAtBottom = (scrollContainer.scrollHeight - scrollContainer.scrollTop <= scrollContainer.clientHeight + 200);
+        }
 
         if ((isAtBottom || force) && !isLoading && page > lastPageLoaded) {
             isLoading = true;
@@ -226,7 +234,7 @@ export default function InfiniteScroll(config) {
         }
 
         resetState();
-        window.addEventListener('scroll', handleScrollDebounced);
+        scrollContainer.addEventListener('scroll', handleScrollDebounced);
         const separator = fetchURL.includes('?') ? '&' : '?';
 
         container.innerHTML = '';
@@ -261,7 +269,7 @@ export default function InfiniteScroll(config) {
             return;
         }
 
-        window.removeEventListener('scroll', handleScrollDebounced);
+        scrollContainer.removeEventListener('scroll', handleScrollDebounced);
         isSetup = false;
 
         removeLoadingSymbol();
@@ -281,31 +289,23 @@ export default function InfiniteScroll(config) {
         }
     }
 
-    function refresh() {
-        if (isCooldown) {
-            pendingArgs = arguments;
-            return;
-        }
+    let debounceTimer;
 
-        isCooldown = true;
-        setTimeout(() => {
-            isCooldown = false;
-            if (pendingArgs) {
-                refresh.apply(this, pendingArgs);
-                pendingArgs = null;
+    function refresh(emptyContainer = true, fadeIn = false, debounceDelay = 500) {
+
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => {
+            if (!container || !document.contains(container)) {
+                return;
             }
-        }, 1000);
 
-        if (!container || !document.contains(container)) {
-            return;
-        }
+            if (isSetup) {
+                teardown();
+            }
 
-        if (isSetup) {
-            teardown();
-        }
-
-        resetState();
-        setup(true, false);
+            resetState();
+            setup(emptyContainer, fadeIn);
+        }, debounceDelay);
     }
 
     return { setup, teardown, refresh, handleScroll, isSetup: () => isSetup };
