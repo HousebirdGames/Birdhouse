@@ -24,6 +24,8 @@ import { resizeTextareaNodes, defaultClickEvent } from "../../../Birdhouse/src/m
  */
 export default class PopupManager {
     constructor() {
+        this.openPopups = [];
+
         document.addEventListener(defaultClickEvent, (event) => {
             if (event.target.matches('.closePopup')) {
                 const parentPopup = event.target.closest('.popup');
@@ -67,6 +69,10 @@ export default class PopupManager {
             document.body.classList.add('body-no-scroll');
             const textareas = popup.querySelectorAll('textarea');
             resizeTextareaNodes(textareas);
+
+            this.openPopups.push(popup);
+
+            history.pushState({ popupOpen: true, popupId: popupID }, '', window.location.href);
         }
     }
 
@@ -76,7 +82,7 @@ export default class PopupManager {
      * 
      * @param {string} popupID The ID of the popup to close.
      */
-    closePopup(popupID) {
+    closePopup(popupID, shouldGoBack = true) {
         const popup = document.getElementById(popupID);
         if (popup) {
             Array.from(document.querySelectorAll('[data-prev-tabindex]')).forEach(el => {
@@ -89,11 +95,22 @@ export default class PopupManager {
             popup.classList.add('fade-out-fast');
             setTimeout(() => {
                 popup.style.display = 'none';
-                document.body.classList.remove('body-no-scroll');
+                if (this.openPopups.length === 0) {
+                    document.body.classList.remove('body-no-scroll');
+                }
             }, 200);
-        }
-        else {
+
+            this.openPopups = this.openPopups.filter(p => p.id !== popupID);
+        } else {
             document.body.classList.remove('body-no-scroll');
         }
+    }
+
+    isAnyPopupOpen() {
+        return this.openPopups.length > 0;
+    }
+
+    getFrontmostPopup() {
+        return this.openPopups[this.openPopups.length - 1] || null;
     }
 }

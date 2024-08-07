@@ -650,6 +650,7 @@ async function updateMaintenanceMode() {
 const content = document.getElementById("content");
 
 let isHandlingRouteChange = false;
+let isHandlingPopupClose = false;
 
 let path = normalizePath(window.location.pathname);
 
@@ -663,7 +664,23 @@ let path = normalizePath(window.location.pathname);
  * This function is called automatically when the application is loaded and when the user navigates,
  * but it can also be triggered manually if needed.
  */
-export async function handleRouteChange() {
+export async function handleRouteChange(event) {
+    if (config.backNavigationClosesPopups && !isHandlingPopupClose && popupManager != null && popupManager.isAnyPopupOpen()) {
+        const frontmostPopup = popupManager.getFrontmostPopup();
+        if (frontmostPopup) {
+            event.preventDefault();
+            isHandlingPopupClose = true;
+            console.log('Closing frontmost popup on back navigation', event);
+
+            popupManager.closePopup(frontmostPopup.id);
+
+            setTimeout(() => {
+                isHandlingPopupClose = false;
+            }, 100);
+        }
+        return;
+    }
+
     if (isHandlingRouteChange) {
         return;
     }
@@ -970,7 +987,7 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     handleRouteChange();
 
-    window.addEventListener('popstate', () => handleRouteChange());
+    window.addEventListener('popstate', (event) => handleRouteChange(event));
 
     document.addEventListener('change', (event) => {
         const checkbox = event.target;
