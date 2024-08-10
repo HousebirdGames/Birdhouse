@@ -664,13 +664,11 @@ let path = normalizePath(window.location.pathname);
  * This function is called automatically when the application is loaded and when the user navigates,
  * but it can also be triggered manually if needed.
  */
-export async function handleRouteChange(event) {
-    if (config.backNavigationClosesPopups && !isHandlingPopupClose && popupManager != null && popupManager.isAnyPopupOpen()) {
+export async function handleRouteChange(forced = false) {
+    if (!forced && config.backNavigationClosesPopups && !isHandlingPopupClose && popupManager != null && popupManager.isAnyPopupOpen()) {
         const frontmostPopup = popupManager.getFrontmostPopup();
         if (frontmostPopup) {
-            event.preventDefault();
             isHandlingPopupClose = true;
-            console.log('Closing frontmost popup on back navigation', event);
 
             popupManager.closePopup(frontmostPopup.id);
 
@@ -686,7 +684,6 @@ export async function handleRouteChange(event) {
     }
 
     isHandlingRouteChange = true;
-
     await window.triggerHook('on-handle-route-change');
 
     removeAllComponentCSS();
@@ -977,6 +974,12 @@ document.addEventListener("DOMContentLoaded", async () => {
 
     if (config.enableInputValidation) {
         setTimeout(initializeInputValidation, 0);
+    }
+
+    if (config.backNavigationClosesPopups) {
+        window.hook('opened-popup', async function (popupID) {
+            history.pushState({ popupOpen: true, popupId: popupID }, '', window.location.href);
+        });
     }
 
     popupManager = new PopupManager();
@@ -1415,7 +1418,7 @@ export function goToRoute(href) {
     if (!href.startsWith('#')) {
         const normalizedHref = normalizePath(href);
         history.pushState(null, '', normalizedHref);
-        handleRouteChange();
+        handleRouteChange(true);
     }
 }
 

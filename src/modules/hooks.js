@@ -4,12 +4,10 @@ The system also caches the last callback registered for each event for quicker a
 
 // Object to store all registered hooks
 window.hooks = {};
-// Cache for storing the last callback registered for each hook
-window.hookCache = {};
 
 /**
- * Registers a callback function for a given hook name. If the hook doesn't exist, it initializes an array for that hook.
- * It also caches the callback for quick future access.
+ * Registers a callback function for a given hook name.
+ * If the hook doesn't exist, it initializes an array for that hook.
  *
  * @param {string} name The name of the hook to register the callback for.
  * @param {Function} callback The callback function to register.
@@ -19,26 +17,55 @@ window.hook = function (name, callback) {
         window.hooks[name] = [];
     }
     window.hooks[name].push(callback);
-    window.hookCache[name] = callback;
 };
 
 /**
- * Triggers a hook by name, executing the last registered callback for it with any provided arguments.
- * If no hook is registered under the provided name, it simply returns the provided arguments.
+ * Triggers a hook by name, executing all registered callbacks for it with any provided arguments.
+ * If no hook is registered under the provided name, it returns null.
  *
  * @param {string} name The name of the hook to trigger.
- * @param {...any} args Arguments to pass to the callback function.
- * @returns {Promise<any>} The result of the callback function or the provided arguments if no callback is registered.
+ * @param {...any} args Arguments to pass to the callback functions.
+ * @returns {Promise<any[]>|Promise<any>} The results of the triggered hook callbacks or a single result if only one callback is registered.
  */
 window.triggerHook = async function (name, ...args) {
     if (!window.hooks[name]) {
         return null;
     }
 
-    let hook = window.hookCache[name];
-    if (hook) {
-        args = await hook(...args);
+    const results = [];
+    for (const callback of window.hooks[name]) {
+        try {
+            const result = await callback(...args);
+            results.push(result);
+        } catch (error) {
+            console.error(`Error in hook "${name}":`, error);
+        }
     }
 
-    return args;
+    return results.length === 1 ? results[0] : results;
+};
+
+/**
+ * Removes a specific callback from a hook.
+ *
+ * @param {string} name The name of the hook.
+ * @param {Function} callback The callback function to remove.
+ */
+window.removeHook = function (name, callback) {
+    if (window.hooks[name]) {
+        window.hooks[name] = window.hooks[name].filter(cb => cb !== callback);
+    }
+};
+
+/**
+ * Clears all hooks for a given name or all hooks if no name is provided.
+ *
+ * @param {string} [name] The name of the hook to clear. If not provided, clears all hooks.
+ */
+window.clearHooks = function (name) {
+    if (name) {
+        delete window.hooks[name];
+    } else {
+        window.hooks = {};
+    }
 };

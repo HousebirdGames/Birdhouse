@@ -52,7 +52,7 @@ export default class PopupManager {
      * 
      * @param {string} popupID The ID of the popup to open.
      */
-    openPopup(popupID) {
+    async openPopup(popupID) {
         const popup = document.getElementById(popupID);
         if (popup) {
             Array.from(document.querySelectorAll('button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])')).forEach(el => {
@@ -72,7 +72,7 @@ export default class PopupManager {
 
             this.openPopups.push(popup);
 
-            history.pushState({ popupOpen: true, popupId: popupID }, '', window.location.href);
+            await window.triggerHook('opened-popup', popupID);
         }
     }
 

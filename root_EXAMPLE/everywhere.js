@@ -461,6 +461,7 @@ window.hook('send-analytics', async function (value) {
 /**
  * This hook is used to set a setting from at your backend.
  * 
+ * 
  * The serverSide boolean can be used to determine if the validation should be done on the server side.
  * @params input, value, errorElement, serverSide
  * @shouldReturn Boolean where false means, that the input is not valid; true (or returning nothing) means, that the input is valid
@@ -490,7 +491,6 @@ window.hook('validate-field', async function (input, value, errorElement, server
     //Please remember, that all input/textarea elements should have a label element surrounding them. This is needed for the automatic error message placement.
 });
 
-
 /**
  * This hook is used to set the content that is displayed while the current component is loading.
  * 
@@ -504,4 +504,17 @@ window.hook('get-loading-content', async function () {
     return `
     <p>The page is loading...</p>
     `;
+});
+
+/**
+ * This hook is used to add custom logic that is triggered after a popup is opened through the openPopup function of the popupManager.
+ * 
+ * 
+ * This hook receives the ID of the popup that was opened as a parameter that can be used to identify the popup.
+ * @params popupID
+ * @shouldReturn Nothing
+ */
+window.hook('opened-popup', async function (popupID) {
+    //This hook is triggered when a popup is opened.
+    console.log('Popup opened:', popupID);
 });
