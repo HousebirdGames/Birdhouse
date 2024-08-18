@@ -20,7 +20,7 @@ window.hook = function (name, callback) {
 };
 
 /**
- * Triggers a hook by name, executing all registered callbacks for it with any provided arguments.
+ * Triggers a hook asynchronously by name, executing all registered callbacks for it with any provided arguments.
  * If no hook is registered under the provided name, it returns null.
  *
  * @param {string} name The name of the hook to trigger.
@@ -36,6 +36,43 @@ window.triggerHook = async function (name, ...args) {
     for (const callback of window.hooks[name]) {
         try {
             const result = await callback(...args);
+            results.push(result);
+        } catch (error) {
+            console.error(`Error in hook "${name}":`, error);
+        }
+    }
+
+    return results.length === 1 ? results[0] : results;
+};
+
+/**
+ * Calls triggerHook to trigger a hook asynchronously by name (alias for triggerHook).
+ *
+ * @param {string} name The name of the hook to trigger.
+ * @param {...any} args Arguments to pass to the callback functions.
+ * @returns {Promise<any[]>|Promise<any>} The results of the triggered hook callbacks or a single result if only one callback is registered.
+ */
+window.triggerHookAsync = function (name, ...args) {
+    return window.triggerHook(name, ...args);
+};
+
+/**
+ * Triggers a hook synchronously by name, executing all registered callbacks for it with any provided arguments.
+ * If no hook is registered under the provided name, it returns null.
+ *
+ * @param {string} name The name of the hook to trigger.
+ * @param {...any} args Arguments to pass to the callback functions.
+ * @returns {Promise<any[]>|Promise<any>} The results of the triggered hook callbacks or a single result if only one callback is registered.
+ */
+window.triggerHookSync = function (name, ...args) {
+    if (!window.hooks[name]) {
+        return null;
+    }
+
+    const results = [];
+    for (const callback of window.hooks[name]) {
+        try {
+            const result = callback(...args);
             results.push(result);
         } catch (error) {
             console.error(`Error in hook "${name}":`, error);

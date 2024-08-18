@@ -482,11 +482,77 @@ async function fetchUserData() {
     }
 }
 
+let idCounter = 0;
+
+/**
+ * Generates a unique identifier string.
+ * 
+ * 
+ * This function combines a timestamp, a random string, and an incrementing counter
+ * to create a unique identifier. This approach ensures uniqueness even if multiple
+ * IDs are generated in the same millisecond.
+ * 
+ * @returns {string} A unique identifier string.
+ */
+export function generateUniqueId() {
+    const timestamp = Date.now();
+    const random = Math.random().toString(36).substr(2, 5);
+    idCounter++;
+    return `_${timestamp}_${random}_${idCounter}`;
+}
+
+/**
+ * Asynchronously loads a component and returns a placeholder.
+ * 
+ * 
+ * This function creates a placeholder for an asynchronously loaded component, then loads the component and replaces the placeholder with the loaded content.
+ * 
+ * 
+ * Usage example:
+ * 
+ * import ExampleComponent from "../your-components/example-component.js";
+ * const placeholder = asyncLoad(ExampleComponent(parameter)), 'component-identifier');
+ * htmlString += placeholder;
+ * 
+ * @param {Function|Promise} componentOrPromise A function that returns a Promise, or a Promise that resolves to the component's HTML.
+ * @param {string} identifier=null An optional identifier for the component that will be passed to the get-component-loading-content hook.
+ * @returns {string} Returns the placeholder HTML string that will be replaced by the component.
+ */
+export function asyncLoad(componentOrPromise, identifier = null) {
+    const placeholderId = generateUniqueId();
+
+    let componentLoadingContent = window.triggerHookSync('get-component-loading-content', identifier);
+    componentLoadingContent = componentLoadingContent || 'Loading...';
+
+    const placeholder = `<div id="${placeholderId}">${componentLoadingContent}</div>`;
+
+    window.hook('on-content-loaded', async function () {
+        try {
+            const componentHtml = await (typeof componentOrPromise === 'function' ? componentOrPromise() : componentOrPromise);
+            const placeholderElement = document.getElementById(placeholderId);
+            if (placeholderElement) {
+                placeholderElement.outerHTML = componentHtml;
+            } else {
+                console.error('Placeholder element not found:', placeholderId);
+            }
+        } catch (error) {
+            console.error('Error loading component:', error);
+            const placeholderElement = document.getElementById(placeholderId);
+            if (placeholderElement) {
+                placeholderElement.innerHTML = 'Error loading component';
+            }
+        }
+    });
+
+    return placeholder;
+}
+
 /**
  * Fetches data from a specified URL using a GET request.
  * 
  * 
  * Throws an error if the network response was not ok or if the fetch operation fails.
+ * 
  * @param {string} url The URL to fetch data from.
  * @param {string} cacheSetting='default' The cache mode to use for the request (default, no-store, reload, no-cache, force-cache, or only-if-cached).
  * @returns {Promise<Object>} A promise that resolves to the JSON response.

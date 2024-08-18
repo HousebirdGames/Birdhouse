@@ -507,6 +507,26 @@ window.hook('get-loading-content', async function () {
 });
 
 /**
+ * This hook is used to set the content that is displayed in the placeholder for a component that is loading using the asyncLoad function.
+ * 
+ * 
+ * Important: This hook is not async, so you can't use await in this function. This is because the placeholder needs to be displayed immediately.
+ * 
+ * 
+ * If you return false or nothing, "Loading..." will be displayed in the placeholder.
+ * @params identifier
+ * @shouldReturn HTML as a string or false
+ */
+window.hook('get-component-loading-content', function (identifier) {
+    //This will be in the placeholder of the asynchronously loaded component until it is loaded. If you give the asyncLoad function an identifier, you can use it here to determine which component is loading and return different content for each component.
+    //You can place skeleton loaders or a loading symbol here or just return an empty string.
+
+    return `
+    This component is loading...
+    `;
+});
+
+/**
  * This hook is used to add custom logic that is triggered after a popup is opened through the openPopup function of the popupManager.
  * 
  * 
