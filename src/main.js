@@ -501,6 +501,8 @@ export function generateUniqueId() {
     return `_${timestamp}_${random}_${idCounter}`;
 }
 
+const asyncLoadTasks = [];
+
 /**
  * Asynchronously loads a component and returns a placeholder.
  * 
@@ -511,7 +513,9 @@ export function generateUniqueId() {
  * Usage example:
  * 
  * import ExampleComponent from "../your-components/example-component.js";
+ * 
  * const placeholder = asyncLoad(ExampleComponent(parameter)), 'component-identifier');
+ * 
  * htmlString += placeholder;
  * 
  * @param {Function|Promise} componentOrPromise A function that returns a Promise, or a Promise that resolves to the component's HTML.
@@ -526,7 +530,7 @@ export function asyncLoad(componentOrPromise, identifier = null) {
 
     const placeholder = `<div id="${placeholderId}">${componentLoadingContent}</div>`;
 
-    window.hook('on-content-loaded', async function () {
+    asyncLoadTasks.push(async () => {
         try {
             const componentHtml = await (typeof componentOrPromise === 'function' ? componentOrPromise() : componentOrPromise);
             const placeholderElement = document.getElementById(placeholderId);
@@ -545,6 +549,11 @@ export function asyncLoad(componentOrPromise, identifier = null) {
     });
 
     return placeholder;
+}
+
+function processAsyncLoadTasks() {
+    asyncLoadTasks.forEach(task => task());
+    asyncLoadTasks.length = 0; // Clear the array after processing
 }
 
 /**
@@ -750,6 +759,7 @@ export async function handleRouteChange(forced = false) {
     }
 
     isHandlingRouteChange = true;
+    asyncLoadTasks.length = 0;
     await window.triggerHook('on-handle-route-change');
 
     removeAllComponentCSS();
@@ -861,6 +871,8 @@ export async function handleRouteChange(forced = false) {
     }
 
     await window.triggerHook('on-content-loaded');
+
+    processAsyncLoadTasks();
 
     textareaResizer();
 
