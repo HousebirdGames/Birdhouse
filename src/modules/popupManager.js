@@ -11,7 +11,7 @@ You can import the `popupManager` instance from `main.js` to access the PopupMan
 Use popupManager.openPopup(popupID) to open a popup by its ID and popupManager.closePopup(popupID) to close a popup by its ID.
  */
 
-import { resizeTextareaNodes, defaultClickEvent } from "../../../Birdhouse/src/main.js";
+import { resizeTextareaNodes, defaultClickEvent, useFlexPopups } from "../../../Birdhouse/src/main.js";
 
 /**
  * Manages the display and behavior of popups within the application.

@@ -14,7 +14,7 @@ import { getQueryParameterByName, updateOrAddQueryParameter, updateTitleAndMeta,
 export default async function Example(exampleData) {
     updateTitleAndMeta('Example Page', 'This is an example page.');
 
-    action(exampleFunction) // This is an example of how to use the action system to call a function when the html of all components and subcomponents is loaded
+    action(exampleFunction); // This is an example of how to use the action system to call a function when the html of all components and subcomponents is loaded
 
     action({
         type: 'click',
