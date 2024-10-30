@@ -31,9 +31,21 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
                 console.error('Failed to extract version from config.js', err);
             }
 
-            console.log('ServiceWorker version:', version);
+            let excludedPaths = [];
+            try {
+                let excludedPathsMatch = text.match(/"?\bexcludedPaths\b"?\s*:\s*(\[[^\]]*\])/);
+                excludedPaths = excludedPathsMatch ? JSON.parse(excludedPathsMatch[1]) : [];
+            } catch (err) {
+                console.error('Failed to extract excludedPaths from config.js', err);
+            }
 
-            navigator.serviceWorker.register('service-worker.js').then(registration => {
+            console.log('ServiceWorker version:', version);
+            //console.log('Excluded paths:', excludedPaths);
+
+            navigator.serviceWorker.register('service-worker.js', {
+                scope: '/',
+                excludedPaths: excludedPaths
+            }).then(registration => {
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {

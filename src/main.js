@@ -17,6 +17,14 @@ import config from '../../config.js';
  */
 export const defaultClickEvent = config.useMouseDown ? 'mousedown' : 'click';
 
+
+/**
+ * Determines the display style for popups based on the configuration. Default is 'block'.
+ * 
+ * @type {boolean}
+ */
+export const useFlexPopups = config.useFlexPopups;
+
 /**
  * Signals if the app is running in standalone mode through Electron.
  * 

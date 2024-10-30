@@ -20,7 +20,7 @@ offline scenarios, enhancing the user experience by leveraging modern web capabi
 */
 
 self.CACHE_VERSION = "1.0.0.0";
-importScripts('./config-sw.js' + `?v=${self.CACHE_VERSION}`);
+importScripts('config-sw.js' + `?v=${self.CACHE_VERSION}`);
 self.importScripts('Birdhouse/filesToCache.js' + `?v=${self.CACHE_VERSION}`);
 
 self.addEventListener('install', function (event) {

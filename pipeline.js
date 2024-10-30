@@ -78,6 +78,7 @@ const defaultConfig = {
     pageDescription: "",
     localhostPath: '/' + localhostPath,
     excludedPaths: [],
+    pwaExcludedPaths: [],
     openCookiePopupAtPageLoad: true,
     showNewUpdateNotes: true,
     maintenanceModeWithFailedBackend: false,
@@ -89,6 +90,7 @@ const defaultConfig = {
     appIcon: 'img/app-icons/icon',
     trustedImageDomains: [],
     useMouseDown: false,
+    useFlexPopups: false,
     backNavigationClosesPopups: true,
     scrollPositionRecallLimit: 20,
 };

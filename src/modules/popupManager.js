@@ -65,7 +65,7 @@ export default class PopupManager {
             popup.classList.remove('fade-in-fast');
             popup.classList.remove('fade-out-fast');
             popup.classList.add('fade-in-fast');
-            popup.style.display = 'block';
+            popup.style.display = useFlexPopups ? 'flex' : 'block';
             document.body.classList.add('body-no-scroll');
             const textareas = popup.querySelectorAll('textarea');
             resizeTextareaNodes(textareas);
