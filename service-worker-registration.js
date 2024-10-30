@@ -88,7 +88,7 @@ function showUpdateNotification(registration) {
     const updatePopup = document.getElementById('newUpdatePopup');
     const updateButton = document.getElementById('update-version-btn');
     if (updatePopup && updateButton) {
-        updatePopup.style.display = 'block';
+        updatePopup.style.display = 'flex';
         updateButton.addEventListener("click", () => {
             updateButton.disabled = true;
             alertPopup('Updating', '<p class="centerText">Please wait while the app is updated...</p><div class="loadingSymbolWrap"><div class="loadingSymbol"></div></div>', false, 'keepOpen');
