@@ -51,7 +51,10 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
             console.log('Excluded paths:', excludedPaths);
             console.log('Scope:', scope);
 
-            navigator.serviceWorker.register('/creations-manager/service-worker.js', {
+            const serviceWorkerPath = `${scope}service-worker.js`;
+
+            console.log('ServiceWorker path:', serviceWorkerPath);
+            navigator.serviceWorker.register(serviceWorkerPath, {
                 scope: scope,
                 excludedPaths: excludedPaths
             }).then(registration => {
