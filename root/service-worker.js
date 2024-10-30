@@ -37,19 +37,22 @@ function cacheFiles() {
     });
 }
 
+
 self.addEventListener('activate', function (event) {
     event.waitUntil(
-        cacheFiles().then(() =>
-            caches.keys().then(function (cacheNames) {
-                return Promise.all(
-                    cacheNames.map(function (cacheName) {
-                        if (self.CACHE_VERSION !== cacheName) {
-                            return caches.delete(cacheName);
-                        }
-                    })
-                );
-            }))
-            .then(() => self.clients.claim())
+        self.clients.claim().then(() =>
+            cacheFiles().then(() =>
+                caches.keys().then(function (cacheNames) {
+                    return Promise.all(
+                        cacheNames.map(function (cacheName) {
+                            if (self.CACHE_VERSION !== cacheName) {
+                                return caches.delete(cacheName);
+                            }
+                        })
+                    );
+                })
+            )
+        )
     );
 });
 
@@ -63,7 +66,6 @@ self.addEventListener('fetch', function (event) {
     var request = event.request;
 
     if (self.config && self.config.excludedPaths && self.config.excludedPaths.some(path => request.url.includes(path))) {
-        event.respondWith(fetch(request));
         return;
     }
 
