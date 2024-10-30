@@ -31,6 +31,14 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
                 console.error('Failed to extract version from config.js', err);
             }
 
+            let scope = '';
+            try {
+                let scopeMatch = text.match(/"?\bscope\b"?\s*:\s*"([^"]*)"/);
+                scope = scopeMatch ? scopeMatch[1] : '';
+            } catch (err) {
+                console.error('Failed to extract scope from config.js', err);
+            }
+
             let excludedPaths = [];
             try {
                 let excludedPathsMatch = text.match(/"?\bexcludedPaths\b"?\s*:\s*(\[[^\]]*\])/);
@@ -40,10 +48,11 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
             }
 
             console.log('ServiceWorker version:', version);
-            //console.log('Excluded paths:', excludedPaths);
+            console.log('Excluded paths:', excludedPaths);
+            console.log('Scope:', scope);
 
-            navigator.serviceWorker.register('service-worker.js', {
-                scope: '/',
+            navigator.serviceWorker.register('/creations-manager/service-worker.js', {
+                scope: scope,
                 excludedPaths: excludedPaths
             }).then(registration => {
                 registration.addEventListener('updatefound', () => {
