@@ -108,7 +108,7 @@ self.addEventListener('fetch', function (event) {
         var urlWithoutQuery = request.url;
 
         if (event.request.mode === 'navigate') {
-            urlWithoutQuery = '/index.html';
+            urlWithoutQuery = './index.html';
         }
 
         var updatedRequest = new Request(urlWithoutQuery + `?v=${self.CACHE_VERSION}`, {
