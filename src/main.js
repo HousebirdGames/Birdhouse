@@ -1250,12 +1250,17 @@ function addLinkListeners() {
 
             const url = new URL(href, window.location.href);
             const cleanHref = url.origin + url.pathname;
+            const relativePath = getRelativePath(cleanHref);
+
+            if (config.scope && !relativePath.startsWith(config.scope)) {
+                return;
+            }
 
             let excludedRoutes = await window.triggerHook('get-spa-excluded-links') || [];
 
             excludedRoutes = excludedRoutes.map(route => { return route.toLowerCase() });
 
-            if (excludedRoutes.includes(getRelativePath(cleanHref))) {
+            if (excludedRoutes.includes(relativePath)) {
                 return;
             }
 
