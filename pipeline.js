@@ -1438,7 +1438,8 @@ async function clearDirectory(dir) {
     }
 }
 
-main().catch(err => console.error(() => {
-    chalk.red('An error occurred in the pipeline:', err.message);
+main().catch(err => {
+    console.error(chalk.red('An error occurred in the pipeline:', err.message));
+    console.error(err);
     exitPipeline();
-})).then(() => exitPipeline());
+}).then(() => exitPipeline());
