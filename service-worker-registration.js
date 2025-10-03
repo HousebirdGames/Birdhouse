@@ -77,7 +77,7 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
                                 if (registration.waiting) {
                                     registration.waiting.postMessage({ action: 'skipWaiting' });
                                 }
-                                if (!version.split('-').includes('f')) {
+                                if (!version.split('-').includes('f') && !version.split('-').includes('s')) {
                                     showUpdateNotification(registration);
                                 }
                             } else {
