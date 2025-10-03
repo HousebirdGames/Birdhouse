@@ -58,6 +58,16 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
                 scope: scope,
                 excludedPaths: excludedPaths
             }).then(registration => {
+                let refreshing = false;
+
+                navigator.serviceWorker.addEventListener('controllerchange', () => {
+                    if (!refreshing && version.split('-').length > 1 && version.split('-').includes('f')) {
+                        refreshing = true;
+                        console.log('New service worker activated, reloading page...');
+                        updateApp(registration);
+                    }
+                });
+
                 registration.addEventListener('updatefound', () => {
                     const newWorker = registration.installing;
                     newWorker.addEventListener('statechange', () => {
@@ -67,9 +77,8 @@ if (typeof window !== 'undefined' && window.process && window.process.type === '
                                 if (registration.waiting) {
                                     registration.waiting.postMessage({ action: 'skipWaiting' });
                                 }
-                                if (version.split('-').includes('f')) {
-                                    console.log('Initiating page reload...');
-                                    updateApp(registration);
+                                if (!version.split('-').includes('f')) {
+                                    showUpdateNotification(registration);
                                 }
                             } else {
                                 showUpdateNotification(registration);
